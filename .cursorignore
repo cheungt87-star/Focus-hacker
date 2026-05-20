@@ -1,0 +1,7 @@
+_local/
+.DS_Store
+*.swp
+*.swo
+*~
+.env
+.env.local

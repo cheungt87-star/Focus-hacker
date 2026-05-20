@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusHacker — Focus Mode</title>
+  <style>
+    :root {
+      --color-ember: #FF4757;
+      --color-charcoal: #2F3542;
+      --color-white: #FFFFFF;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      font-family: var(--font-ui);
+      background: var(--color-charcoal);
+      color: var(--color-white);
+      -webkit-font-smoothing: antialiased;
+    }
+    main { text-align: center; max-width: 28rem; }
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    h1 span { color: var(--color-ember); }
+    p { font-size: 1.05rem; opacity: 0.9; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>You are in <span>focus mode</span></h1>
+    <p>This site is blocked until your focus interval ends. Get back to work.</p>
+  </main>
+</body>
+</html>

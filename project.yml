@@ -1,0 +1,95 @@
+name: FocusHacker
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    macOS: "13.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: N68FSVK6AM
+    CURRENT_PROJECT_VERSION: "49"
+    MARKETING_VERSION: "1.0"
+    # Xcode recommended project settings
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+fileGroups:
+  - requirements.md
+targets:
+  FocusHacker:
+    type: application
+    platform: macOS
+    sources:
+      - path: FocusHacker
+      - path: Shared
+    resources:
+      - path: FocusHacker/Resources/StoreKit/FocusHacker.storekit
+        type: file
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focushacker.app
+        GENERATE_INFOPLIST_FILE: YES
+        # Optional Dock is controlled via `NSApplication.setActivationPolicy` (see `DockIconVisibilityController`).
+        # LSUIElement would pin the process as an agent and prevents a normal menu bar / `.regular` policy from working.
+        INFOPLIST_KEY_LSUIElement: NO
+        PRODUCT_NAME: FocusHacker
+        CODE_SIGN_ENTITLEMENTS: FocusHacker/FocusHacker.entitlements
+        # Avoids Xcode error: host entitlements file modified during the build when embedding/signing the filter extension.
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
+    dependencies:
+      - target: NetworkFilterExtension
+        embed: true
+        codeSign: true
+    scheme:
+      testTargets:
+        - FocusHackerTests
+        - NetworkFilterExtensionTests
+
+  NetworkFilterExtension:
+    # Must be `system-extension` (embeds under Library/SystemExtensions/*.systemextension).
+    # `app-extension` places an .appex in PlugIns; OSSystemExtensionRequest then fails with
+    # "Extension not found in App bundle" while NEFilterManager prefs can still show isEnabled=true.
+    type: system-extension
+    platform: macOS
+    sources:
+      - path: NetworkFilterExtension
+      - path: Shared
+    settings:
+      base:
+        CURRENT_PROJECT_VERSION: "68"
+        PRODUCT_BUNDLE_IDENTIFIER: com.focushacker.app.network-extension
+        # Wrapper must be `{bundleId}.systemextension` so OSSystemExtensionRequest can match the identifier;
+        # PRODUCT_NAME alone produced `NetworkFilterExtension.systemextension` → code 4 in Gather (SYSEXT_FAILED).
+        PRODUCT_NAME: com.focushacker.app.network-extension
+        PRODUCT_MODULE_NAME: NetworkFilterExtension
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: NetworkFilterExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: NetworkFilterExtension/NetworkFilterExtension.entitlements
+        # Avoids Xcode error: entitlements file modified during the build (extension signing).
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
+
+  FocusHackerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - FocusHackerTests
+    dependencies:
+      - target: FocusHacker
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focushacker.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  NetworkFilterExtensionTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - NetworkFilterExtensionTests
+    dependencies:
+      - target: NetworkFilterExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.focushacker.app.extension-tests
+        GENERATE_INFOPLIST_FILE: YES

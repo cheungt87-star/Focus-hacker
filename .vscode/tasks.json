@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Clean & Build",
+        "type": "shell",
+        "command": "xcodebuild",
+        "args": ["clean", "build", "-scheme", "FocusHacker"],
+        "problemMatcher": []
+      }
+    ]
+  }

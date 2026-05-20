@@ -1,0 +1,83 @@
+{
+  "identifier" : "com.focushacker.storekit.configuration",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "14.99",
+      "familyShareable" : false,
+      "internalID" : "focushacker_lifetime_access",
+      "localizations" : [
+        {
+          "description" : "One-time purchase for FocusHacker lifetime access.",
+          "displayName" : "Lifetime Access",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.focushacker.lifetime",
+      "referenceName" : "FocusHacker Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "F0CUSH4CK3R",
+    "_developerTeamID" : "0000000000",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 1
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "57392184",
+      "localizations" : [
+        {
+          "description" : "Free trial backed by StoreKit introductory offer.",
+          "displayName" : "FocusHacker Trial Access",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "FocusHacker Trial Access Group",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "14.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "focushacker_intro_subscription",
+          "introductoryOffer" : {
+            "internalID" : "focushacker_intro_offer_7day_free",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P7D"
+          },
+          "localizations" : [
+            {
+              "description" : "7-day free introductory access backed by StoreKit. Purchase Lifetime separately to remove renewal.",
+              "displayName" : "Trial Membership",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.focushacker.intro",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "FocusHacker Intro Trial",
+          "subscriptionGroupID" : "57392184",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

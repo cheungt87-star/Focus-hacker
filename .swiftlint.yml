@@ -1,0 +1,31 @@
+included:
+  - FocusHacker
+  - FocusHackerTests
+
+disabled_rules:
+  - trailing_whitespace
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - fatal_error_message
+  - force_unwrapping
+
+type_name:
+  min_length: 3
+  excluded:
+    - V1
+
+identifier_name:
+  min_length:
+    warning: 3
+  excluded:
+    - id
+
+function_body_length:
+  warning: 60
+  error: 100
+
+line_length:
+  warning: 120
+  error: 140
