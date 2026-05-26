@@ -6,6 +6,7 @@ final class FocusHackerAppDelegate: NSObject, NSApplicationDelegate {
     private let onboardingPresenter = FirstLaunchOnboardingPresenter()
     private var onboardingObserver: NSObjectProtocol?
     private var activationPolicyObserver: NSObjectProtocol?
+    private let browserAutomationLaunchObserver = BrowserAutomationLaunchObserver.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let dependencies = AppDependencies.live
@@ -29,12 +30,10 @@ final class FocusHackerAppDelegate: NSObject, NSApplicationDelegate {
 
         onboardingPresenter.presentIfNeeded(dependencies: dependencies)
 
+        browserAutomationLaunchObserver.start()
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            if UserDefaults.standard.bool(forKey: "onboarding.didCompleteGuidedFlow") {
-                AutomationPermissionPrimer.primeOnLaunchIfNeeded()
-            } else {
-                AutomationPermissionPrimer.primeForOnboardingIfNeeded()
-            }
+            AutomationPermissionPrimer.primeOnLaunchIfNeeded()
         }
 
         Task { @MainActor in

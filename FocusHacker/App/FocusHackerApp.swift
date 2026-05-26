@@ -10,9 +10,39 @@ struct FocusHackerApp: App {
 
     init() {
         let resolvedDependencies = AppDependencies.live
-        _appShellViewModel = StateObject(wrappedValue: AppShellViewModel(dependencies: resolvedDependencies))
-        _mainWindowPresenter = StateObject(wrappedValue: MainWindowPresenter())
-        _purchaseEntitlements = StateObject(wrappedValue: resolvedDependencies.purchaseEntitlementService)
+        let viewModel = AppShellViewModel(dependencies: resolvedDependencies)
+        let presenter = MainWindowPresenter()
+        let entitlements = resolvedDependencies.purchaseEntitlementService
+
+        if let notifications = resolvedDependencies.transitionNotificationService as? TransitionNotificationService {
+            notifications.onViewStatsRequested = { [weak presenter, weak viewModel, weak entitlements] in
+                guard let presenter,
+                      let viewModel,
+                      let entitlements,
+                      entitlements.evaluation.allowsAppUse else {
+                    return
+                }
+                if #available(macOS 14.0, *) {
+                    presenter.openWindow(viewModel: viewModel, purchaseEntitlements: entitlements)
+                }
+            }
+            notifications.onCompletionNotificationSuppressed = { [weak viewModel] in
+                Task { @MainActor in
+                    guard let viewModel else { return }
+                    let hint = "Enable notifications in System Settings for session alerts."
+                    if let existing = viewModel.completionBannerText,
+                       !existing.contains(hint) {
+                        viewModel.completionBannerText = "\(existing) \(hint)"
+                    } else if viewModel.completionBannerText == nil {
+                        viewModel.completionBannerText = hint
+                    }
+                }
+            }
+        }
+
+        _appShellViewModel = StateObject(wrappedValue: viewModel)
+        _mainWindowPresenter = StateObject(wrappedValue: presenter)
+        _purchaseEntitlements = StateObject(wrappedValue: entitlements)
     }
 
     var body: some Scene {
@@ -27,6 +57,7 @@ struct FocusHackerApp: App {
                         }
                         return
                     }
+                    MenuBarExtraPanelController.dismissPopover()
                     appShellViewModel.openSection(.history)
                     if #available(macOS 14.0, *) {
                         mainWindowPresenter.openWindow(
@@ -41,8 +72,10 @@ struct FocusHackerApp: App {
                     }
                 }
             )
+            .id(appShellViewModel.appearancePreference)
         } label: {
             MenuBarStatusLabel(viewModel: appShellViewModel)
+                .id(appShellViewModel.menuBarLabelRevision)
         }
         .menuBarExtraStyle(.window)
         .commands {

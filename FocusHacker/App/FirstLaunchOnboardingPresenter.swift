@@ -30,8 +30,9 @@ final class FirstLaunchOnboardingPresenter: NSObject, NSWindowDelegate {
             .frame(minWidth: 560, minHeight: 540)
 
         let hostingController = NSHostingController(rootView: rootView)
-        let newWindow = NSWindow(contentViewController: hostingController)
+        let newWindow = AppWindowChrome.makeWindow(contentViewController: hostingController)
         newWindow.title = "Welcome to FocusHacker"
+        AppWindowChrome.applyNoFullScreenPolicy(to: newWindow)
         newWindow.styleMask = [.titled, .closable, .miniaturizable]
         newWindow.center()
         newWindow.isReleasedWhenClosed = false

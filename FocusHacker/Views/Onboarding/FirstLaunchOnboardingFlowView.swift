@@ -14,6 +14,8 @@ struct FirstLaunchOnboardingFlowView: View {
                         overviewStepContent
                     case .timerExplanation:
                         timerExplanationContent
+                    case .gamificationGoals:
+                        gamificationGoalsContent
                     case .blockerExplanation:
                         blockerEducationContent
                     case .blockerPermission:
@@ -35,6 +37,7 @@ struct FirstLaunchOnboardingFlowView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(MacDS.Color.backgroundPrimary)
         .environment(\.appUISurface, .mainWindow)
+        .preferredColorScheme(viewModel.appearancePreference.preferredColorScheme)
     }
 
     private var headerMetrics: some View {
@@ -69,9 +72,29 @@ struct FirstLaunchOnboardingFlowView: View {
             explanatoryParagraph([
                 "You decide how many focus rounds to run between short rests.",
                 "An optional long rest anchors the finishing stretch so you decompress before logging XP.",
-                "Pause when life interrupts—but ending a session early means no XP is awarded for those rounds.",
+                "Earn 1 XP per focus minute; finish naturally for a 1.5× bonus. Early ends still earn partial XP.",
+                "Weekly targets: 800 min (Hacker goal) plus a personal goal you set next.",
                 "The menubar shows a green FOCUS pill or red REST pill with your countdown—both flash in the final 20 seconds so you never miss the switch."
             ])
+        }
+    }
+
+    private var gamificationGoalsContent: some View {
+        VStack(alignment: .leading, spacing: DesignSpacing.spacing4) {
+            Text("Your weekly focus goal")
+                .font(.macDSSectionHeading)
+                .foregroundStyle(MacDS.Color.textPrimary)
+
+            explanatoryParagraph([
+                "The Hacker goal is 800 minutes per week for everyone.",
+                "Pick a personal target that fits your schedule—streaks track both separately.",
+                "You can change this anytime in Settings; changing your personal target resets that streak."
+            ])
+
+            PersonalWeeklyTargetInput(
+                hours: $viewModel.onboardingPersonalWeeklyTargetHoursComponent,
+                minutes: $viewModel.onboardingPersonalWeeklyTargetMinutesComponent
+            )
         }
     }
 
@@ -122,9 +145,6 @@ struct FirstLaunchOnboardingFlowView: View {
                     SystemSettingsLinker.openAutomationSettings()
                 }
                 .buttonStyle(MacDSSecondaryButtonStyle())
-            }
-            .onAppear {
-                viewModel.requestBrowserAutomationPermissions()
             }
         }
     }

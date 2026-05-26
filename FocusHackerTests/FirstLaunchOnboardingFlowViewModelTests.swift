@@ -58,6 +58,7 @@ final class FirstLaunchOnboardingFlowViewModelTests: XCTestCase {
         viewModel.goForward()
         viewModel.goForward()
         viewModel.goForward()
+        viewModel.goForward()
 
         XCTAssertEqual(viewModel.step, .blockerPermission)
 
@@ -76,6 +77,7 @@ final class FirstLaunchOnboardingFlowViewModelTests: XCTestCase {
             dismissAfterCompletion: { }
         )
 
+        viewModel.goForward()
         viewModel.goForward()
         viewModel.goForward()
         viewModel.goForward()

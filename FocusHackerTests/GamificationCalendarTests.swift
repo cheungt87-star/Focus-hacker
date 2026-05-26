@@ -15,7 +15,7 @@ final class GamificationCalendarTests: XCTestCase {
         XCTAssertEqual(end.timeIntervalSince(monday), 7 * 24 * 3_600, accuracy: 1)
     }
 
-    func testWeeklyLevelEvaluatorDoesNotChangeLevelWithoutClosedWeek() async throws {
+    func testWeeklyGamificationEvaluatorDoesNotEvaluateCurrentWeek() async throws {
         guard #available(macOS 14.0, *) else {
             XCTAssertTrue(true)
             return
@@ -26,12 +26,11 @@ final class GamificationCalendarTests: XCTestCase {
         }
         let container = SwiftDataContainerFactory.makeInMemoryContainer()
         let settings = UserDefaultsSettingsStore(userDefaults: suiteDefaults, appGroupSuiteName: nil)
-        settings.weeklyXPGoalXP = 1
-        let evaluator = SwiftDataWeeklyLevelEvaluator(container: container, settingsStore: settings)
+        let evaluator = SwiftDataWeeklyGamificationEvaluator(container: container, settingsStore: settings)
         let wednesday = Date()
         let first = try await evaluator.evaluatePendingClosedWeeks(now: wednesday)
         let second = try await evaluator.evaluatePendingClosedWeeks(now: wednesday)
         XCTAssertFalse(second.evaluatedAnyWeek)
-        XCTAssertEqual(first.newLevel, second.newLevel)
+        XCTAssertEqual(first.defaultTargetStreak, second.defaultTargetStreak)
     }
 }

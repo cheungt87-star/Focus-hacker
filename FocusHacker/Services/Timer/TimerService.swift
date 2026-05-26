@@ -3,6 +3,7 @@ import Foundation
 actor TimerService: TimerServiceProtocol {
     private let blockerService: BlockerServiceProtocol
     private let sessionRecorder: SessionRecording
+    private let gamificationDashboardReader: GamificationDashboardReading
     private let dateProvider: @Sendable () -> Date
     private let tickIntervalNanoseconds: UInt64
 
@@ -30,11 +31,13 @@ actor TimerService: TimerServiceProtocol {
     init(
         blockerService: BlockerServiceProtocol = BlockerService(),
         sessionRecorder: SessionRecording = NoOpSessionRecorder(),
+        gamificationDashboardReader: GamificationDashboardReading = NoOpGamificationDashboardReader(),
         dateProvider: @escaping @Sendable () -> Date = { Date() },
         tickIntervalNanoseconds: UInt64 = 1_000_000_000
     ) {
         self.blockerService = blockerService
         self.sessionRecorder = sessionRecorder
+        self.gamificationDashboardReader = gamificationDashboardReader
         self.dateProvider = dateProvider
         self.tickIntervalNanoseconds = tickIntervalNanoseconds
     }
@@ -134,17 +137,22 @@ actor TimerService: TimerServiceProtocol {
         publishState()
         let endedAt = dateProvider()
         let startedAt = activeSessionStartedAt ?? endedAt
+        let partialMinutes = state.completedFocusMinutes
+        let xpAwarded = FocusXPCalculator.xp(
+            forFocusMinutes: partialMinutes,
+            naturallyConcluded: NaturalCompletionPolicy.naturallyConcludedOnEarlyEnd
+        )
         if let sessionUUID = activeSessionUUID {
             let partialRounds = completedFocusIntervalsSoFar(state: state)
             try? await sessionRecorder.recordSessionEndedEarly(
                 sessionUUID: sessionUUID,
                 startedAt: startedAt,
                 endedAt: endedAt,
-                partialFocusMinutes: state.completedFocusMinutes,
+                partialFocusMinutes: partialMinutes,
                 partialRoundsCompleted: partialRounds
             )
         }
-        publishTransition(.sessionEndedEarly)
+        publishTransition(.sessionEndedEarly(xpAwarded: xpAwarded))
         await resetToIdle()
     }
 
@@ -623,7 +631,8 @@ private extension TimerService {
         publishState()
 
         let focusMinutes = state.completedFocusMinutes
-        let xpAwarded = max(0, focusMinutes * 2)
+        let natural = NaturalCompletionPolicy.naturallyConcludedOnFullCompletion
+        let xpAwarded = FocusXPCalculator.xp(forFocusMinutes: focusMinutes, naturallyConcluded: natural)
         let now = dateProvider()
         let startedAt = activeSessionStartedAt ?? now
         let totalFocusIntervals = max(0, state.totalRounds) * max(0, state.totalCycles)
@@ -633,13 +642,63 @@ private extension TimerService {
             totalFocusMinutes: focusMinutes,
             roundsCompleted: totalFocusIntervals,
             configuredRounds: totalFocusIntervals,
-            xpAwarded: xpAwarded
+            xpAwarded: xpAwarded,
+            naturallyConcluded: natural
         )
 
+        // #region agent log
+        DebugSessionLogAfdf58.write(
+            hypothesisId: "H1",
+            location: "TimerService.completeSession",
+            message: "before_record",
+            data: [
+                "hasSessionUUID": activeSessionUUID != nil ? "true" : "false",
+                "focusMinutes": "\(focusMinutes)",
+                "xpAwarded": "\(xpAwarded)",
+            ]
+        )
+        DebugSessionLogAc92a4.write(
+            hypothesisId: "H1-H2",
+            location: "TimerService.completeSession",
+            message: "before_record",
+            data: [
+                "hasSessionUUID": activeSessionUUID != nil ? "true" : "false",
+                "focusMinutes": "\(focusMinutes)",
+                "xpAwarded": "\(xpAwarded)",
+                "endedAt": "\(Int(now.timeIntervalSince1970))",
+            ]
+        )
+        // #endregion
         if let sessionUUID = activeSessionUUID {
-            try? await sessionRecorder.recordSessionCompleted(completedSession, sessionUUID: sessionUUID)
+            do {
+                try await sessionRecorder.recordSessionCompleted(completedSession, sessionUUID: sessionUUID)
+                // #region agent log
+                DebugSessionLogAfdf58.write(
+                    hypothesisId: "H2",
+                    location: "TimerService.completeSession",
+                    message: "record_ok",
+                    data: ["sessionUUID": sessionUUID.uuidString]
+                )
+                // #endregion
+            } catch {
+                // #region agent log
+                DebugSessionLogAfdf58.write(
+                    hypothesisId: "H2",
+                    location: "TimerService.completeSession",
+                    message: "record_failed",
+                    data: ["error": String(describing: error)]
+                )
+                // #endregion
+            }
         }
-        publishTransition(.sessionCompleted(xpAwarded: xpAwarded))
+
+        publishTransition(
+            .sessionCompleted(
+                xpAwarded: xpAwarded,
+                focusMinutes: focusMinutes,
+                focusSeconds: state.completedWorkSeconds
+            )
+        )
         await resetToIdle()
     }
 

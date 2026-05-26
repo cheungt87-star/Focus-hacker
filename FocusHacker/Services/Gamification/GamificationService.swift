@@ -8,12 +8,13 @@ protocol XPStatsReading: Sendable {
 @available(macOS 14.0, *)
 struct SwiftDataXPStatsReader: XPStatsReading, @unchecked Sendable {
     let container: ModelContainer
+    let settingsStore: UserDefaultsSettingsStore
 
     func totalAccumulatedXP() async throws -> Int {
         let context = ModelContext(container)
         let descriptor = FetchDescriptor<XPRecord>()
         let records = try context.fetch(descriptor)
-        return records.reduce(0) { $0 + max(0, $1.xpAmount) }
+        return LifetimeXPFiltering.sumLifetimeXP(from: records, resetAt: settingsStore.lifetimeXPResetAt)
     }
 }
 

@@ -74,90 +74,96 @@ extension Color {
 
 // MARK: - Session chrome (maps to HTML `[data-mode="focus"]` / `[data-mode="rest"]`)
 
-enum TimerChromeTheme: Equatable, Sendable {
-    case focus
-    case rest
+struct TimerChromeTheme: Equatable, Sendable {
+    let bgApp: Color
+    let bgPanel: Color
+    let bgSurface: Color
+    let borderDefault: Color
+    let textPrimary: Color
+    let textSecondary: Color
+    let textPlaceholder: Color
+    let accentPrimary: Color
+    let accentHover: Color
+    let slabHeaderBackground: Color
+    let slabFooterBackground: Color
+    let slabHeaderPrimaryForeground: Color
+    let slabHeaderSecondaryForeground: Color
+    let slabFooterPrimaryForeground: Color
+    let slabFooterSecondaryForeground: Color
 
-    init(sessionState: AppShellSessionState) {
-        switch sessionState {
-        case .idle, .focus:
-            self = .focus
-        case .rest:
-            self = .rest
-        }
-    }
+    var accentTimer: Color { accentPrimary }
 
-    var bgApp: Color {
-        switch self {
-        case .focus: return .fhColorCharcoal
-        case .rest: return .fhColorCloud
-        }
-    }
+    var inputFocusRingColor: Color { accentPrimary }
 
-    var bgPanel: Color {
-        switch self {
-        case .focus: return .fhColorDarkBg
-        case .rest: return .fhColorRestPanel
-        }
-    }
+    init(sessionState: AppShellSessionState, colorScheme: ColorScheme) {
+        let isDark = colorScheme == .dark
+        let isRest = sessionState == .rest
 
-    var bgSurface: Color {
-        switch self {
-        case .focus: return .fhColorSurface
-        case .rest: return .fhColorWhite
-        }
-    }
-
-    var borderDefault: Color {
-        switch self {
-        case .focus: return .fhColorMedium
-        case .rest: return .fhColorRestBorder
-        }
-    }
-
-    var textPrimary: Color {
-        switch self {
-        case .focus: return .fhColorWhite
-        case .rest: return .fhColorRestTextPrimary
-        }
-    }
-
-    var textSecondary: Color {
-        switch self {
-        case .focus: return .fhColorLight
-        case .rest: return .fhColorRestTextSecondary
-        }
-    }
-
-    var textPlaceholder: Color {
-        switch self {
-        case .focus: return .fhColorMedium
-        case .rest: return .fhColorRestPlaceholder
-        }
-    }
-
-    var accentPrimary: Color {
-        switch self {
-        case .focus: return .fhColorEmber
-        case .rest: return .fhColorMint
-        }
-    }
-
-    var accentHover: Color {
-        switch self {
-        case .focus: return .fhColorEmberLight
-        case .rest: return .fhColorMintLight
-        }
-    }
-
-    var accentTimer: Color {
-        accentPrimary
-    }
-
-    var inputFocusRingColor: Color {
-        switch self {
-        case .focus: return .fhColorEmber
-        case .rest: return .fhColorMint
+        switch (isRest, isDark) {
+        case (false, false):
+            bgApp = .fhColorCharcoal
+            bgPanel = .fhColorDarkBg
+            bgSurface = .fhColorSurface
+            borderDefault = .fhColorMedium
+            textPrimary = .fhColorWhite
+            textSecondary = .fhColorLight
+            textPlaceholder = .fhColorMedium
+            accentPrimary = .fhColorEmber
+            accentHover = .fhColorEmberLight
+            slabHeaderBackground = .fhColorCharcoal
+            slabFooterBackground = .fhColorTimerFooter
+            slabHeaderPrimaryForeground = .fhColorWhite
+            slabHeaderSecondaryForeground = Color.white.opacity(0.72)
+            slabFooterPrimaryForeground = .fhColorWhite
+            slabFooterSecondaryForeground = Color.white.opacity(0.76)
+        case (false, true):
+            bgApp = Color(hex: 0x1A1D24)
+            bgPanel = Color(hex: 0x252930)
+            bgSurface = Color(hex: 0x3A4049)
+            borderDefault = Color(hex: 0x4A4F58)
+            textPrimary = .fhColorWhite
+            textSecondary = Color(hex: 0xC8CDD3)
+            textPlaceholder = Color(hex: 0x8A9199)
+            accentPrimary = .fhColorEmber
+            accentHover = .fhColorEmberLight
+            slabHeaderBackground = Color(hex: 0x14171C)
+            slabFooterBackground = Color(hex: 0x0A0A0A)
+            slabHeaderPrimaryForeground = .fhColorWhite
+            slabHeaderSecondaryForeground = Color.white.opacity(0.72)
+            slabFooterPrimaryForeground = .fhColorWhite
+            slabFooterSecondaryForeground = Color.white.opacity(0.76)
+        case (true, false):
+            bgApp = .fhColorCloud
+            bgPanel = .fhColorRestPanel
+            bgSurface = .fhColorWhite
+            borderDefault = .fhColorRestBorder
+            textPrimary = .fhColorRestTextPrimary
+            textSecondary = .fhColorRestTextSecondary
+            textPlaceholder = .fhColorRestPlaceholder
+            accentPrimary = .fhColorMint
+            accentHover = .fhColorMintLight
+            slabHeaderBackground = .fhColorCharcoal
+            slabFooterBackground = .fhColorTimerFooter
+            slabHeaderPrimaryForeground = .fhColorWhite
+            slabHeaderSecondaryForeground = Color.white.opacity(0.72)
+            slabFooterPrimaryForeground = .fhColorWhite
+            slabFooterSecondaryForeground = Color.white.opacity(0.76)
+        case (true, true):
+            bgApp = Color(hex: 0x1A2332)
+            bgPanel = Color(hex: 0x222D3A)
+            bgSurface = Color(hex: 0x2A3848)
+            borderDefault = Color(hex: 0x3A5060)
+            textPrimary = Color(hex: 0xE8F1F7)
+            textSecondary = Color(hex: 0x8AADBE)
+            textPlaceholder = Color(hex: 0x6A8A9A)
+            accentPrimary = .fhColorMint
+            accentHover = .fhColorMintLight
+            slabHeaderBackground = Color(hex: 0x141C28)
+            slabFooterBackground = Color(hex: 0x0A0A0A)
+            slabHeaderPrimaryForeground = .fhColorWhite
+            slabHeaderSecondaryForeground = Color.white.opacity(0.72)
+            slabFooterPrimaryForeground = .fhColorWhite
+            slabFooterSecondaryForeground = Color.white.opacity(0.76)
         }
     }
 }
@@ -250,7 +256,7 @@ enum FocusHackerMotion {
 }
 
 private struct TimerChromeThemeKey: EnvironmentKey {
-    static let defaultValue: TimerChromeTheme = .focus
+    static let defaultValue = TimerChromeTheme(sessionState: .idle, colorScheme: .light)
 }
 
 extension EnvironmentValues {
@@ -318,37 +324,111 @@ struct TimerBrutalistGhostButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - macOS design system (Wispr Flow — main app windows only)
+// MARK: - WCAG 2.1 AA quick reference
+//
+// Minimum contrast ratios (foreground : background):
+//   • Normal text (< 18pt / < 14pt bold): 4.5 : 1
+//   • Large text  (≥ 18pt / ≥ 14pt bold): 3.0 : 1
+//   • UI components & input borders:       3.0 : 1
+//
+// Avoid extremes in dark mode:
+//   • Pure white (#FFF) on dark backgrounds exceeds ~15 : 1 — causes eye fatigue.
+//     Use off-white (e.g. #E8E8E8) to stay in the 7–12 : 1 sweet spot.
+//   • Pure black (#000) backgrounds cause halation on OLED. Prefer #1C1C1E or darker.
+//
+// Accent colour rule — one hex rarely works in both modes:
+//   • Light mode: use a *darker, more saturated* value to achieve 4.5 : 1 on white cards.
+//   • Dark mode:  use a *lighter, less saturated* value to avoid neon bloom on dark surfaces.
+//   Define separate light/dark stops and swap via macDSAdaptive.
+//
+// Input fields:
+//   • Do NOT use pure white (#FFF) fields on light-grey backgrounds — the ~15 : 1 jump
+//     breaks visual hierarchy and causes eye fatigue. Aim for a warm elevated surface
+//     (~2–4 lightness steps above the page background).
+//   • Input borders must meet 3 : 1 against the surrounding surface (WCAG 1.4.11).
+//
+// Focus rings:
+//   • Focus ring colour must be 3 : 1 against both the background AND the unfocused border.
+//   • Minimum ring: 2 px solid, offset 2 px so it sits outside the component border.
+//
+// Sidebar separation:
+//   • Without a visible border or background difference, sidebar and content read as
+//     one flat surface. Minimum delta: ~6 lightness units (e.g. #F5F3F0 → #E6E4DC).
+//
+// Motion / reduced-motion:
+//   • Always wrap animations in @media (prefers-reduced-motion: reduce) equivalents.
+//     In SwiftUI, check AccessibilityReduceMotion and skip or shorten animations.
+
+// MARK: - macOS design system (FocusHacker main app windows)
 
 enum MacDS {
     enum Color {
-        static let backgroundPrimary = SwiftUI.Color(hex: 0xFAFAFA)
-        static let sidebarBackground = SwiftUI.Color(hex: 0xF5F3F0)
-        static let textPrimary = SwiftUI.Color(hex: 0x1A1A1A)
-        /// Readable secondary copy on white — WCAG AA at 12pt+ (~5.8:1 on #FFFFFF).
-        static let textSecondary = SwiftUI.Color(hex: 0x5C5C5C)
-        /// Non-essential metadata only — not for instructional copy.
-        static let textTertiary = SwiftUI.Color(hex: 0xA8A8A8)
-        /// Disabled controls and inactive toggles on light surfaces.
-        static let textDisabled = SwiftUI.Color(hex: 0x8A8A8A)
-        static let cardBackground = SwiftUI.Color.white
-        static let border = SwiftUI.Color(hex: 0xD0D0D0)
-        static let dividerLight = SwiftUI.Color(hex: 0xEFEFEF)
-        static let progressTrack = SwiftUI.Color(hex: 0xD4D4D4)
-        static let surfaceDisabled = SwiftUI.Color(hex: 0xE8E6E1)
-        static let accentTeal = SwiftUI.Color(hex: 0x2D7A7A)
-        static let accentTealLight = SwiftUI.Color(hex: 0x4A9B9B)
-        static let accentTealLighter = SwiftUI.Color(hex: 0x7AC5C5)
-        static let accentTealLightest = SwiftUI.Color(hex: 0xC8E5E5)
-        static let accentOrange = SwiftUI.Color(hex: 0xF5A623)
-        static let accentPurple = SwiftUI.Color(hex: 0xB896FF)
-        static let secondaryButtonBackground = SwiftUI.Color(hex: 0xF0EEE8)
-        static let pillBackground = SwiftUI.Color(hex: 0xE8E6E1)
-        static let sidebarActiveBackground = SwiftUI.Color(hex: 0xE8E6E1)
-        static let heroGradientStart = SwiftUI.Color(hex: 0x1A1A1A)
-        static let heroGradientEnd = SwiftUI.Color(hex: 0x2A2A2A)
-        static let inputBackground = SwiftUI.Color(hex: 0xFAFAFA)
-        static let destructive = SwiftUI.Color(hex: 0xC0392B)
+        // Page background. Warm off-white avoids harsh pure-white glare.
+        // Dark: #1C1C1E — standard macOS dark base, not pure black.
+        static let backgroundPrimary = SwiftUI.Color.macDSAdaptive(light: 0xF0EEE8, dark: 0x1C1C1E)
+
+        // Sidebar must be visibly darker than backgroundPrimary to create separation.
+        // Light delta: F0EEE8 → E6E4DC (~6 lightness units). Dark: one step lighter than page.
+        static let sidebarBackground = SwiftUI.Color.macDSAdaptive(light: 0xE6E4DC, dark: 0x252528)
+
+        // 1A1A1A on F0EEE8 ≈ 15.2 : 1 (well above AA). F5F5F5 on 1C1C1E ≈ 14.2 : 1.
+        static let textPrimary = SwiftUI.Color.macDSAdaptive(light: 0x1A1A1A, dark: 0xF5F5F5)
+
+        // Readable secondary copy — WCAG AA at 12pt+.
+        // 5C5C5C on FFFFFF ≈ 5.9 : 1. A8A8A8 on 1C1C1E ≈ 5.1 : 1.
+        static let textSecondary = SwiftUI.Color.macDSAdaptive(light: 0x5C5C5C, dark: 0xA8A8A8)
+
+        // Non-essential metadata only (timestamps, counts). NOT for instructional copy.
+        // A8A8A8 on FFFFFF ≈ 2.3 : 1 — fails AA. Use only at 18pt+ or with a secondary cue.
+        static let textTertiary = SwiftUI.Color.macDSAdaptive(light: 0xA8A8A8, dark: 0x6E6E6E)
+
+        // Disabled state. Intentionally low contrast to signal non-interactivity.
+        static let textDisabled = SwiftUI.Color.macDSAdaptive(light: 0x8A8A8A, dark: 0x5C5C5C)
+
+        // White cards on warm-grey page create clear elevation depth.
+        static let cardBackground = SwiftUI.Color.macDSAdaptive(light: 0xFFFFFF, dark: 0x2C2C2E)
+
+        // Border: must hit 3 : 1 against adjacent surfaces (WCAG 1.4.11).
+        static let border = SwiftUI.Color.macDSAdaptive(light: 0xD0D0D0, dark: 0x48484A)
+        static let dividerLight = SwiftUI.Color.macDSAdaptive(light: 0xEFEFEF, dark: 0x3A3A3C)
+        static let progressTrack = SwiftUI.Color.macDSAdaptive(light: 0xD4D4D4, dark: 0x3A3A3C)
+        static let surfaceDisabled = SwiftUI.Color.macDSAdaptive(light: 0xE8E6E1, dark: 0x3A3A3C)
+
+        // Primary accent — teal, split across modes (see WCAG note above).
+        // Light 1E6B5E on FFFFFF ≈ 6.3 : 1 (AA ✓, approaches AAA). Deeper, avoids the neon clash.
+        // Dark  3DA882 on 1C1C1E ≈ 5.5 : 1 (AA ✓). Desaturated to prevent bloom on dark backgrounds.
+        static let accentTeal = SwiftUI.Color.macDSAdaptive(light: 0x1E6B5E, dark: 0x3DA882)
+
+        // Hover / secondary teal. Used for hover states and progress rings.
+        // Do NOT use accentTealLight as standalone text — fails AA at body sizes.
+        static let accentTealLight = SwiftUI.Color.macDSAdaptive(light: 0x2A8A7A, dark: 0x4DB894)
+
+        // Tint fills for selected states and tinted surfaces. Text on these must use accentTeal.
+        static let accentTealLighter = SwiftUI.Color.macDSAdaptive(light: 0x4AB0A0, dark: 0x5DC4A8)
+        static let accentTealLightest = SwiftUI.Color.macDSAdaptive(light: 0xC5E0D8, dark: 0x1E3D30)
+
+        // Orange for paused state / warnings. F5A623 on white ≈ 2.5 : 1 — large text / icon only.
+        static let accentOrange = SwiftUI.Color.macDSAdaptive(light: 0xC87A10, dark: 0xF5A623)
+
+        // Purple for XP celebrations and level-ups.
+        static let accentPurple = SwiftUI.Color.macDSAdaptive(light: 0xB896FF, dark: 0xC4A8FF)
+
+        static let secondaryButtonBackground = SwiftUI.Color.macDSAdaptive(light: 0xE8E6DF, dark: 0x3A3A3C)
+        static let pillBackground = SwiftUI.Color.macDSAdaptive(light: 0xE8E6E1, dark: 0x48484A)
+        static let sidebarActiveBackground = SwiftUI.Color.macDSAdaptive(light: 0xDDDBD3, dark: 0x3A3A3C)
+
+        static let heroGradientStart = SwiftUI.Color.macDSAdaptive(light: 0x1A1A1A, dark: 0x0D0D0D)
+        static let heroGradientEnd = SwiftUI.Color.macDSAdaptive(light: 0x2A2A2A, dark: 0x1A1A1A)
+
+        // Input fields: warm elevated surface — NOT pure white on light, NOT pure dark on dark.
+        // Light F0EEE8 → inputs sit at F8F6F2 (visibly lifted without harsh white contrast).
+        // Dark 2C2C2E is one elevation above the 1C1C1E page base.
+        // Input border (#C8C6BF light, #48484A dark) must be 3 : 1 against the input surface.
+        static let inputBackground = SwiftUI.Color.macDSAdaptive(light: 0xF8F6F2, dark: 0x2C2C2E)
+        static let inputBorder = SwiftUI.Color.macDSAdaptive(light: 0xC8C6BF, dark: 0x48484A)
+
+        // Destructive: light value deepened to pass 4.5 : 1 on white. C0392B on #FFF ≈ 5.1 : 1 ✓.
+        static let destructive = SwiftUI.Color.macDSAdaptive(light: 0xC0392B, dark: 0xE74C3C)
     }
 
     enum Radius {
@@ -367,6 +447,75 @@ enum MacDS {
         static let smOpacity: Double = 0.08
         static let mdRadius: CGFloat = 8
         static let mdOpacity: Double = 0.12
+        static let darkSmOpacity: Double = 0.25
+        static let darkMdOpacity: Double = 0.35
+
+        static func color(elevated: Bool) -> SwiftUI.Color {
+            SwiftUI.Color.macDSAdaptiveOpacity(
+                light: elevated ? mdOpacity : smOpacity,
+                dark: elevated ? darkMdOpacity : darkSmOpacity
+            )
+        }
+    }
+
+    /// Scheme-explicit colors for `MenuBarExtra` and other surfaces that cannot use `MacDS.Color` adaptive providers.
+    enum Resolved {
+        static func backgroundPrimary(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xF0EEE8, dark: 0x1C1C1E, for: colorScheme)
+        }
+
+        static func textPrimary(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0x1A1A1A, dark: 0xF5F5F5, for: colorScheme)
+        }
+
+        static func textSecondary(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0x5C5C5C, dark: 0xA8A8A8, for: colorScheme)
+        }
+
+        static func textTertiary(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xA8A8A8, dark: 0x6E6E6E, for: colorScheme)
+        }
+
+        static func cardBackground(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xFFFFFF, dark: 0x2C2C2E, for: colorScheme)
+        }
+
+        static func border(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xD0D0D0, dark: 0x48484A, for: colorScheme)
+        }
+
+        static func accentTeal(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0x1E6B5E, dark: 0x3DA882, for: colorScheme)
+        }
+
+        static func accentTealLight(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0x2A8A7A, dark: 0x4DB894, for: colorScheme)
+        }
+
+        static func accentTealLightest(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xC5E0D8, dark: 0x1E3D30, for: colorScheme)
+        }
+
+        static func inputBackground(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xF8F6F2, dark: 0x2C2C2E, for: colorScheme)
+        }
+
+        static func inputBorder(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xC8C6BF, dark: 0x48484A, for: colorScheme)
+        }
+
+        static func pillBackground(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xE8E6E1, dark: 0x48484A, for: colorScheme)
+        }
+
+        static func surfaceDisabled(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xE8E6E1, dark: 0x3A3A3C, for: colorScheme)
+        }
+
+        /// Border for tinted teal cell surfaces (popover stat cards, preset carousel).
+        static func accentTealCellBorder(for colorScheme: ColorScheme) -> SwiftUI.Color {
+            SwiftUI.Color.macDSResolved(light: 0xA8D0C8, dark: 0x2A5048, for: colorScheme)
+        }
     }
 }
 
@@ -391,7 +540,11 @@ enum AppUISurface: Equatable, Sendable {
 }
 
 private struct AppUISurfaceKey: EnvironmentKey {
-    static let defaultValue: AppUISurface = .menuBarPopover
+    static let defaultValue: AppUISurface = .mainWindow
+}
+
+private struct MenuBarExtraWindowKey: EnvironmentKey {
+    static let defaultValue = false
 }
 
 extension EnvironmentValues {
@@ -399,9 +552,15 @@ extension EnvironmentValues {
         get { self[AppUISurfaceKey.self] }
         set { self[AppUISurfaceKey.self] = newValue }
     }
+
+    /// When true, action menus render in-window (required for `MenuBarExtra` popovers).
+    var menuBarExtraWindow: Bool {
+        get { self[MenuBarExtraWindowKey.self] }
+        set { self[MenuBarExtraWindowKey.self] = newValue }
+    }
 }
 
-/// Resolves form field colors for main-window (light MacDS) vs menu bar popover (session chrome).
+/// Resolves form field colors for main-window (MacDS) vs menu bar popover (session chrome).
 struct FormChromePalette: Equatable, Sendable {
     let textPrimary: Color
     let textSecondary: Color
@@ -409,15 +568,18 @@ struct FormChromePalette: Equatable, Sendable {
     let borderDefault: Color
     let inputFocusRingColor: Color
 
-    static func resolve(surface: AppUISurface, timerChrome: TimerChromeTheme) -> FormChromePalette {
+    static func resolve(surface: AppUISurface, timerChrome: TimerChromeTheme, colorScheme: ColorScheme = .light) -> FormChromePalette {
         switch surface {
         case .mainWindow:
+            // bgSurface: warm elevated surface (not pure white) — avoids 15 : 1 contrast blast.
+            // inputFocusRingColor: matches accentTeal split values — 6.3 : 1 light, 5.5 : 1 dark.
+            // Focus ring should be rendered at 2 px with 2 px offset (see WCAG 2.4.11 — Focus Appearance).
             return FormChromePalette(
-                textPrimary: MacDS.Color.textPrimary,
-                textSecondary: MacDS.Color.textSecondary,
-                bgSurface: MacDS.Color.inputBackground,
-                borderDefault: MacDS.Color.border,
-                inputFocusRingColor: MacDS.Color.accentTeal
+                textPrimary: MacDS.Resolved.textPrimary(for: colorScheme),
+                textSecondary: MacDS.Resolved.textSecondary(for: colorScheme),
+                bgSurface: MacDS.Resolved.inputBackground(for: colorScheme),
+                borderDefault: MacDS.Resolved.inputBorder(for: colorScheme),
+                inputFocusRingColor: MacDS.Resolved.accentTeal(for: colorScheme)
             )
         case .menuBarPopover:
             return FormChromePalette(
@@ -427,6 +589,23 @@ struct FormChromePalette: Equatable, Sendable {
                 borderDefault: timerChrome.borderDefault,
                 inputFocusRingColor: timerChrome.inputFocusRingColor
             )
+        }
+    }
+}
+
+// MARK: - Timer metrics display (supporting numbers — not hero countdown)
+
+enum TimerMetricsDisplayTypography {
+    static let heroBandLabelSize: CGFloat = 9
+    static let heroBandValueSize: CGFloat = 14
+    static let valueWeight: Font.Weight = .semibold
+
+    static func slabValueSize(for layout: TimerThreeRowSlabLayout) -> CGFloat {
+        switch layout {
+        case .mainWindow:
+            return 13
+        case .menuBarPopover:
+            return 11
         }
     }
 }
@@ -454,37 +633,10 @@ struct TimerSlabAppearance: Equatable {
     let usesBrutalistControls: Bool
 
     @MainActor
-    static func make(layout: TimerThreeRowSlabLayout, viewModel: AppShellViewModel) -> TimerSlabAppearance {
-        switch layout {
-        case .menuBarPopover:
-            return legacyPopover(viewModel: viewModel)
-        case .mainWindow:
-            return mainWindow(viewModel: viewModel)
-        }
-    }
-
-    @MainActor
-    private static func legacyPopover(viewModel: AppShellViewModel) -> TimerSlabAppearance {
-        TimerSlabAppearance(
-            cornerRadius: 2,
-            strokeColor: .fhColorCharcoal,
-            strokeWidth: 2,
-            headerBackground: viewModel.timerSlabHeaderBackground,
-            headerPrimaryForeground: viewModel.timerSlabHeaderPrimaryForeground,
-            headerSecondaryForeground: viewModel.timerSlabHeaderSecondaryForeground,
-            heroBackground: viewModel.heroBrutalistBlockBackground,
-            heroForeground: viewModel.heroBrutalistBlockForeground,
-            footerBackground: viewModel.timerSlabFooterBackground,
-            footerColumnCarbon: .fhColorDSCarbon,
-            footerColumnStone: .fhColorDSStone,
-            footerLabelTint: .fhColorDSSmoke,
-            footerPrimaryForeground: viewModel.timerSlabFooterPrimaryForeground,
-            footerSecondaryForeground: viewModel.timerSlabFooterSecondaryForeground,
-            upNextColumnBackground: viewModel.timerSlabUpNextColumnBackground,
-            upNextAccent: viewModel.timerSlabRow3UpNextDetailColor,
-            usesUppercaseLabels: true,
-            usesBrutalistControls: true
-        )
+    static func make(layout: TimerThreeRowSlabLayout, viewModel: AppShellViewModel, colorScheme: ColorScheme = .light) -> TimerSlabAppearance {
+        _ = layout
+        _ = colorScheme
+        return mainWindow(viewModel: viewModel)
     }
 
     @MainActor
@@ -549,14 +701,51 @@ extension Color {
         let blue = Double(hex & 0x0000FF) / 255
         self.init(red: red, green: green, blue: blue)
     }
+
+    static func macDSResolved(light: UInt32, dark: UInt32, for colorScheme: ColorScheme) -> Color {
+        Color(hex: colorScheme == .dark ? dark : light)
+    }
+
+    static func macDSAdaptive(light: UInt32, dark: UInt32) -> Color {
+        #if os(macOS)
+        return Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+            let hex = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+            return NSColor(hex: hex)
+        }))
+        #else
+        return Color(hex: light)
+        #endif
+    }
+
+    static func macDSAdaptiveOpacity(light: Double, dark: Double) -> Color {
+        #if os(macOS)
+        return Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+            let opacity = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+            return NSColor.black.withAlphaComponent(opacity)
+        }))
+        #else
+        return Color.black.opacity(light)
+        #endif
+    }
 }
+
+#if os(macOS)
+private extension NSColor {
+    convenience init(hex: UInt32) {
+        let red = CGFloat((hex & 0xFF0000) >> 16) / 255
+        let green = CGFloat((hex & 0x00FF00) >> 8) / 255
+        let blue = CGFloat(hex & 0x0000FF) / 255
+        self.init(red: red, green: green, blue: blue, alpha: 1)
+    }
+}
+#endif
 
 // MARK: - MacDS SwiftUI components (main app windows)
 
 extension View {
     func macDSCardShadow(elevated: Bool = false) -> some View {
         shadow(
-            color: .black.opacity(elevated ? MacDS.Shadow.mdOpacity : MacDS.Shadow.smOpacity),
+            color: MacDS.Shadow.color(elevated: elevated),
             radius: elevated ? MacDS.Shadow.mdRadius : MacDS.Shadow.smRadius,
             y: elevated ? 2 : 1
         )
@@ -581,8 +770,10 @@ struct MacDSCard<Content: View>: View {
         content()
             .padding(DesignSpacing.spacing5)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MacDS.Color.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: MacDS.Radius.card))
+            .background {
+                RoundedRectangle(cornerRadius: MacDS.Radius.card)
+                    .fill(MacDS.Color.cardBackground)
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: MacDS.Radius.card)
                     .stroke(MacDS.Color.border, lineWidth: 1)
@@ -709,7 +900,11 @@ struct MacDSPrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: MacDS.Radius.standard)
-                    .fill(MacDS.Color.textPrimary.opacity(configuration.isPressed ? 0.85 : 1))
+                    .fill(
+                        configuration.isPressed
+                            ? MacDS.Color.accentTealLight
+                            : MacDS.Color.accentTeal
+                    )
             )
             .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
     }
@@ -731,6 +926,46 @@ struct MacDSSecondaryButtonStyle: ButtonStyle {
                     .stroke(MacDS.Color.border, lineWidth: 1)
             )
             .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
+    }
+}
+
+struct MacDSDestructiveOutlineButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        MacDSDestructiveOutlineButtonLabel(configuration: configuration)
+    }
+}
+
+private struct MacDSDestructiveOutlineButtonLabel: View {
+    let configuration: ButtonStyle.Configuration
+    @State private var isHovered = false
+
+    private var fillOpacity: Double {
+        if configuration.isPressed {
+            return 0.12
+        }
+        if isHovered {
+            return 0.08
+        }
+        return 0
+    }
+
+    var body: some View {
+        configuration.label
+            .font(.macDSBody.weight(.medium))
+            .foregroundStyle(MacDS.Color.destructive)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: MacDS.Radius.standard)
+                    .fill(MacDS.Color.destructive.opacity(fillOpacity))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: MacDS.Radius.standard)
+                    .stroke(MacDS.Color.destructive, lineWidth: 1)
+            )
+            .onHover { isHovered = $0 }
+            .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
+            .animation(FocusHackerMotion.easeFast, value: isHovered)
     }
 }
 
@@ -788,9 +1023,14 @@ struct MacDSCircularProgressRing: View {
     var lineWidth: CGFloat = 8
     var tint: Color = MacDS.Color.accentTeal
     var centerColor: Color = MacDS.Color.textPrimary
+    var centerText: String? = nil
 
     private var clampedFraction: Double {
         min(1, max(0, fraction))
+    }
+
+    private var centerLabel: String {
+        centerText ?? "\(percentDisplay)%"
     }
 
     var body: some View {
@@ -810,7 +1050,7 @@ struct MacDSCircularProgressRing: View {
                 )
                 .rotationEffect(.degrees(-90))
 
-            Text("\(percentDisplay)%")
+            Text(centerLabel)
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(centerColor)
                 .monospacedDigit()
@@ -827,7 +1067,7 @@ struct MacDSTextField: View {
     @FocusState private var isFocused: Bool
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: .mainWindow, timerChrome: .focus)
+        FormChromePalette.resolve(surface: .mainWindow, timerChrome: TimerChromeTheme(sessionState: .idle, colorScheme: .light))
     }
 
     var body: some View {
@@ -855,6 +1095,365 @@ struct MacDSTextField: View {
                         .allowsHitTesting(false)
                 }
             }
+    }
+}
+
+// MARK: - Popover menus (MacDS picker + timer chrome action menu)
+
+fileprivate struct MacDSPopoverStyle: Equatable {
+    let surface: AppUISurface
+    let palette: FormChromePalette
+    let timerChrome: TimerChromeTheme
+    let panelBackground: Color
+    let panelBorder: Color
+    let selectedFill: Color
+    let hoverBackground: Color
+
+    static func resolve(
+        surface: AppUISurface,
+        timerChrome: TimerChromeTheme,
+        colorScheme: ColorScheme
+    ) -> MacDSPopoverStyle {
+        MacDSPopoverStyle(
+            surface: surface,
+            palette: FormChromePalette.resolve(
+                surface: surface,
+                timerChrome: timerChrome,
+                colorScheme: colorScheme
+            ),
+            timerChrome: timerChrome,
+            panelBackground: MacDS.Resolved.cardBackground(for: colorScheme),
+            panelBorder: MacDS.Resolved.border(for: colorScheme),
+            selectedFill: MacDS.Resolved.accentTealLightest(for: colorScheme),
+            hoverBackground: MacDS.Resolved.surfaceDisabled(for: colorScheme)
+        )
+    }
+
+    var panelCornerRadius: CGFloat {
+        MacDS.Radius.card
+    }
+
+    var selectedStroke: Color {
+        palette.inputFocusRingColor
+    }
+
+    var rowCornerRadius: CGFloat {
+        MacDS.Radius.standard - 2
+    }
+}
+
+fileprivate struct MacDSPopoverPanel<Content: View>: View {
+    let style: MacDSPopoverStyle
+    var minWidth: CGFloat?
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        content()
+            .padding(DesignSpacing.spacing2)
+            .frame(minWidth: minWidth)
+            .background(
+                RoundedRectangle(cornerRadius: style.panelCornerRadius)
+                    .fill(style.panelBackground)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: style.panelCornerRadius)
+                    .stroke(style.panelBorder, lineWidth: 1)
+            )
+            .modifier(MacDSPopoverPanelShadow(surface: style.surface))
+    }
+}
+
+fileprivate struct MacDSPopoverPanelShadow: ViewModifier {
+    let surface: AppUISurface
+
+    func body(content: Content) -> some View {
+        content.macDSCardShadow(elevated: true)
+    }
+}
+
+fileprivate struct MacDSPopoverRow: View {
+    let title: String
+    let style: MacDSPopoverStyle
+    var isSelected: Bool = false
+    var isDestructive: Bool = false
+    var showsCheckmark: Bool = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignSpacing.spacing2) {
+                Text(title)
+                    .font(isSelected ? .macDSBody.weight(.semibold) : .macDSBody)
+                    .foregroundStyle(titleColor)
+                Spacer(minLength: 0)
+                if showsCheckmark && isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(style.selectedStroke)
+                }
+            }
+            .padding(.horizontal, DesignSpacing.spacing3)
+            .padding(.vertical, DesignSpacing.spacing2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(rowBackground)
+            .clipShape(RoundedRectangle(cornerRadius: style.rowCornerRadius))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var titleColor: Color {
+        if isDestructive {
+            return Color.fhColorCoral
+        }
+        if isSelected {
+            return style.palette.textPrimary
+        }
+        return style.palette.textSecondary
+    }
+
+    @ViewBuilder
+    private var rowBackground: some View {
+        if isSelected {
+            RoundedRectangle(cornerRadius: style.rowCornerRadius)
+                .fill(style.selectedFill)
+                .overlay(
+                    RoundedRectangle(cornerRadius: style.rowCornerRadius)
+                        .stroke(style.selectedStroke, lineWidth: 1)
+                )
+        } else if isHovered {
+            RoundedRectangle(cornerRadius: style.rowCornerRadius)
+                .fill(style.hoverBackground)
+        }
+    }
+}
+
+struct MacDSMenuPicker<Option: Hashable>: View {
+    let accessibilityTitle: String
+    @Binding var selection: Option
+    let options: [Option]
+    let label: (Option) -> String
+    var maxTriggerWidth: CGFloat? = 220
+
+    @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.timerChromeTheme) private var timerChrome
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isPopoverPresented = false
+
+    private var style: MacDSPopoverStyle {
+        MacDSPopoverStyle.resolve(
+            surface: appUISurface,
+            timerChrome: timerChrome,
+            colorScheme: colorScheme
+        )
+    }
+
+    var body: some View {
+        Button {
+            isPopoverPresented.toggle()
+        } label: {
+            HStack(spacing: DesignSpacing.spacing2) {
+                Text(label(selection))
+                    .font(.macDSBody)
+                    .foregroundStyle(style.palette.textPrimary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(style.palette.textSecondary)
+                    .rotationEffect(.degrees(isPopoverPresented ? 180 : 0))
+                    .animation(FocusHackerMotion.easeFast, value: isPopoverPresented)
+            }
+            .padding(.horizontal, DesignSpacing.spacing3)
+            .padding(.vertical, DesignSpacing.spacing2)
+            .frame(maxWidth: maxTriggerWidth)
+            .background(style.palette.bgSurface)
+            .clipShape(RoundedRectangle(cornerRadius: MacDS.Radius.standard))
+            .overlay(
+                RoundedRectangle(cornerRadius: MacDS.Radius.standard)
+                    .stroke(
+                        isPopoverPresented ? style.palette.inputFocusRingColor : style.palette.borderDefault,
+                        lineWidth: isPopoverPresented ? 2 : 1
+                    )
+                    .allowsHitTesting(false)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(accessibilityTitle), \(label(selection))")
+        .popover(isPresented: $isPopoverPresented, arrowEdge: .bottom) {
+            MacDSPopoverPanel(style: style, minWidth: maxTriggerWidth ?? 220) {
+                VStack(spacing: DesignSpacing.spacing1) {
+                    ForEach(options, id: \.self) { option in
+                        MacDSPopoverRow(
+                            title: label(option),
+                            style: style,
+                            isSelected: selection == option,
+                            showsCheckmark: true
+                        ) {
+                            selection = option
+                            isPopoverPresented = false
+                        }
+                    }
+                }
+            }
+            .preferredColorScheme(colorScheme)
+        }
+    }
+}
+
+struct MacDSActionMenuItem: Identifiable {
+    let id: String
+    let title: String
+    var role: ButtonRole?
+    let action: () -> Void
+}
+
+struct MacDSActionMenu<Label: View>: View {
+    let items: [MacDSActionMenuItem]
+    let accessibilityTitle: String
+  /// When set, the parent renders `MacDSInWindowActionMenuOverlay` (required for `MenuBarExtra` windows).
+    var isPresented: Binding<Bool>?
+    @ViewBuilder var label: () -> Label
+
+    @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.menuBarExtraWindow) private var menuBarExtraWindow
+    @Environment(\.timerChromeTheme) private var timerChrome
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var internalIsPresented = false
+
+    private var presentationBinding: Binding<Bool> {
+        isPresented ?? $internalIsPresented
+    }
+
+    var body: some View {
+        Button {
+            presentationBinding.wrappedValue.toggle()
+        } label: {
+            label()
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityTitle)
+        .popover(isPresented: popoverPresentationBinding, arrowEdge: .bottom) {
+            MacDSActionMenuPanel(
+                items: items,
+                surface: appUISurface,
+                timerChrome: timerChrome,
+                isPresented: presentationBinding,
+                colorScheme: colorScheme
+            )
+        }
+    }
+
+    /// Popover binding is only used on main-window surfaces; menubar uses in-window overlay from the parent.
+    private var popoverPresentationBinding: Binding<Bool> {
+        if menuBarExtraWindow {
+            return .constant(false)
+        }
+        return presentationBinding
+    }
+}
+
+/// In-window action menu for `MenuBarExtra` popovers — SwiftUI `.popover` is unreliable there.
+struct MacDSInWindowActionMenuOverlay: View {
+    @Binding var isPresented: Bool
+    let items: [MacDSActionMenuItem]
+    let timerChrome: TimerChromeTheme
+    let colorScheme: ColorScheme
+
+    private var style: MacDSPopoverStyle {
+        MacDSPopoverStyle.resolve(
+            surface: .mainWindow,
+            timerChrome: timerChrome,
+            colorScheme: colorScheme
+        )
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Color.black.opacity(0.2)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { isPresented = false }
+
+            MacDSActionMenuPanel(
+                items: items,
+                surface: .mainWindow,
+                timerChrome: timerChrome,
+                isPresented: $isPresented,
+                colorScheme: colorScheme
+            )
+            .padding(.trailing, DesignSpacing.spacing4)
+            .padding(.bottom, DesignSpacing.spacing4)
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottomTrailing)))
+        .zIndex(2)
+    }
+}
+
+struct MacDSActionMenuPanel: View {
+    let items: [MacDSActionMenuItem]
+    let surface: AppUISurface
+    let timerChrome: TimerChromeTheme
+    @Binding var isPresented: Bool
+    let colorScheme: ColorScheme
+
+    private var style: MacDSPopoverStyle {
+        MacDSPopoverStyle.resolve(
+            surface: surface,
+            timerChrome: timerChrome,
+            colorScheme: colorScheme
+        )
+    }
+
+    var body: some View {
+        MacDSPopoverPanel(style: style, minWidth: 160) {
+            VStack(spacing: DesignSpacing.spacing1) {
+                ForEach(items) { item in
+                    MacDSPopoverRow(
+                        title: item.title,
+                        style: style,
+                        isDestructive: item.role == .destructive
+                    ) {
+                        isPresented = false
+                        item.action()
+                    }
+                }
+            }
+        }
+        .preferredColorScheme(colorScheme)
+    }
+}
+
+struct MacDSActionMenuTriggerButton: View {
+    var isActive: Bool
+    let accessibilityTitle: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(MacDS.Color.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(
+                    RoundedRectangle(cornerRadius: MacDS.Radius.standard)
+                        .fill(MacDS.Color.cardBackground.opacity(isActive ? 1 : 0.85))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: MacDS.Radius.standard)
+                        .stroke(
+                            isActive ? MacDS.Color.accentTeal : MacDS.Color.border,
+                            lineWidth: isActive ? 2 : 1
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityTitle)
     }
 }
 
@@ -1009,7 +1608,11 @@ struct MacDSSlabCompactPrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: MacDS.Radius.standard)
-                    .fill(MacDS.Color.textPrimary.opacity(configuration.isPressed ? 0.85 : 1))
+                    .fill(
+                        configuration.isPressed
+                            ? MacDS.Color.accentTealLighter
+                            : MacDS.Color.accentTealLight
+                    )
             )
             .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
     }
@@ -1036,3 +1639,103 @@ struct MacDSSlabCompactSecondaryButtonStyle: ButtonStyle {
             .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
     }
 }
+
+#if DEBUG
+@available(macOS 14.0, *)
+#Preview("MacDSMenuPicker — light") {
+    struct PreviewHost: View {
+        @State private var voice = VoiceOption.crystal
+
+        var body: some View {
+            MacDSMenuPicker(
+                accessibilityTitle: "Voice",
+                selection: $voice,
+                options: Array(VoiceOption.allCases),
+                label: { $0.displayName }
+            )
+            .padding()
+            .frame(width: 320)
+            .background(MacDS.Color.backgroundPrimary)
+            .environment(\.appUISurface, .mainWindow)
+            .environment(\.timerChromeTheme, TimerChromeTheme(sessionState: .idle, colorScheme: .light))
+            .preferredColorScheme(.light)
+        }
+    }
+    return PreviewHost()
+}
+
+@available(macOS 14.0, *)
+#Preview("MacDSMenuPicker — dark") {
+    struct PreviewHost: View {
+        @State private var voice = VoiceOption.jocko
+
+        var body: some View {
+            MacDSMenuPicker(
+                accessibilityTitle: "Voice",
+                selection: $voice,
+                options: Array(VoiceOption.allCases),
+                label: { $0.displayName }
+            )
+            .padding()
+            .frame(width: 320)
+            .background(MacDS.Color.backgroundPrimary)
+            .environment(\.appUISurface, .mainWindow)
+            .environment(\.timerChromeTheme, TimerChromeTheme(sessionState: .idle, colorScheme: .dark))
+            .preferredColorScheme(.dark)
+        }
+    }
+    return PreviewHost()
+}
+
+@available(macOS 14.0, *)
+#Preview("MacDSActionMenu — focus dark") {
+    struct PreviewHost: View {
+        var body: some View {
+            MacDSActionMenu(
+                items: [
+                    MacDSActionMenuItem(id: "quit", title: "Quit", role: .destructive) {}
+                ],
+                accessibilityTitle: "More options"
+            ) {
+                Label("More options", systemImage: "line.3.horizontal")
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 32, height: 32)
+            }
+            .padding()
+            .frame(width: 200)
+            .background(TimerChromeTheme(sessionState: .focus, colorScheme: .dark).bgPanel)
+            .environment(\.timerChromeTheme, TimerChromeTheme(sessionState: .focus, colorScheme: .dark))
+            .preferredColorScheme(.dark)
+        }
+    }
+    return PreviewHost()
+}
+
+@available(macOS 14.0, *)
+#Preview("MacDSActionMenu — rest light") {
+    struct PreviewHost: View {
+        var body: some View {
+            MacDSActionMenu(
+                items: [
+                    MacDSActionMenuItem(id: "quit", title: "Quit", role: .destructive) {}
+                ],
+                accessibilityTitle: "More options"
+            ) {
+                Label("More options", systemImage: "line.3.horizontal")
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(TimerChromeTheme(sessionState: .rest, colorScheme: .light).textPrimary)
+                    .frame(width: 32, height: 32)
+            }
+            .padding()
+            .frame(width: 200)
+            .background(TimerChromeTheme(sessionState: .rest, colorScheme: .light).bgPanel)
+            .environment(\.timerChromeTheme, TimerChromeTheme(sessionState: .rest, colorScheme: .light))
+            .preferredColorScheme(.light)
+        }
+    }
+    return PreviewHost()
+}
+#endif

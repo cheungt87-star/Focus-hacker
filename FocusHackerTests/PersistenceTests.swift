@@ -486,23 +486,34 @@ final class PersistenceTests: XCTestCase {
 
     @available(macOS 14.0, *)
     func testSwiftDataSessionLifecycleLinksXPToSession() async throws {
+        let suiteName = "PersistenceTests.sessionXP.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = UserDefaultsSettingsStore(userDefaults: defaults, appGroupSuiteName: nil)
+
         let container = SwiftDataContainerFactory.makeInMemoryContainer()
-        let recorder = SwiftDataSessionLifecycleRecorder(container: container)
+        let recorder = SwiftDataSessionLifecycleRecorder(container: container, settingsStore: store)
         let sessionUUID = UUID()
         let startedAt = Date()
         try await recorder.recordSessionBegan(sessionUUID: sessionUUID, startedAt: startedAt)
         let completed = CompletedSessionRecord(
             startedAt: startedAt,
             endedAt: startedAt.addingTimeInterval(120),
-            totalFocusMinutes: 1,
+            totalFocusMinutes: 100,
             roundsCompleted: 1,
             configuredRounds: 1,
-            xpAwarded: 2
+            xpAwarded: 150,
+            naturallyConcluded: true
         )
         try await recorder.recordSessionCompleted(completed, sessionUUID: sessionUUID)
-        let reader = SwiftDataGamificationDashboardReader(container: container)
+        let reader = SwiftDataGamificationDashboardReader(container: container, settingsStore: store)
         let total = try await reader.totalAccumulatedXP()
-        XCTAssertEqual(total, 2)
+        XCTAssertEqual(total, 150)
+
+        defaults.removePersistentDomain(forName: suiteName)
     }
 
     func testMigrationFixtureSeedsV1Entities() {
@@ -530,7 +541,7 @@ struct MigrationFixture {
             sessions: [Session(createdAt: Date(), focusDurationMinutes: 25, roundsCompleted: 1, xpAwarded: 25, sessionUUID: nil)],
             xpRecords: [XPRecord(xpAmount: 50, createdAt: Date(), focusMinutesContributing: 25, session: nil)],
             streakRecords: [StreakRecord(streakValue: 1, evaluatedAt: Date(), missedDaysBeforeEvaluation: 0)],
-            playerProgressRows: [PlayerProgress(currentLevel: 1, lastEvaluatedWeekStart: nil, lastWeekXPEarned: nil)]
+            playerProgressRows: [PlayerProgress()]
         )
     }
 }

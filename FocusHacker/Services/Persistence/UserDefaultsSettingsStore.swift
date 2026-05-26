@@ -10,12 +10,14 @@ struct UserDefaultsSettingsStore {
         static let longRestDurationSeconds = "settings.timer.longRestDurationSeconds"
         static let roundsPerSession = "settings.timer.roundsPerSession"
         static let cyclesPerSession = "settings.timer.cyclesPerSession"
+        static let lastSelectedFocusPresetID = "settings.timer.lastSelectedFocusPresetID"
         static let selectedSoundPackIdentifier = "settings.audio.selectedSoundPackIdentifier"
+        static let selectedVoiceOption = "settings.audio.selectedVoiceOption"
         static let isAudioMuted = "settings.audio.isMuted"
         static let blockedDomains = BlockerAppGroup.StandardUserDefaultsKey.blockedDomains
         static let blockedBundleIdentifiers = BlockerAppGroup.StandardUserDefaultsKey.blockedBundleIdentifiers
         static let selectedAppShellSection = "settings.appShell.selectedSection"
-        static let showsDockIcon = "settings.appShell.showsDockIcon"
+        static let appearancePreference = "settings.appShell.appearancePreference"
         static let blockerOnboardingPresented = "onboarding.blocker.didPresentExplanation"
 
         /// When set, authoritative; when unset, onboarding completion is inferred from blocker onboarding for migration.
@@ -29,8 +31,16 @@ struct UserDefaultsSettingsStore {
         /// US-028: first observed subscription (`purchaseDate`), read-through cache mirrored from verified StoreKit.
         static let trialStartPurchaseDateCache = "focushacker.trialStartDate"
         static let weeklyXPGoalXP = "settings.gamification.weeklyXPGoalXP"
+        static let personalWeeklyMinutesTarget = "settings.gamification.personalWeeklyMinutesTarget"
+        static let personalTargetLastModified = "settings.gamification.personalTargetLastModified"
+        static let gamificationXPBackfillCompleted = "settings.gamification.xpBackfillCompleted"
+        static let lifetimeXPResetAt = "settings.gamification.lifetimeXPResetAt"
         static let profileDisplayName = "settings.profile.displayName"
     }
+
+    static let personalWeeklyMinutesMin = 100
+    static let personalWeeklyMinutesMax = 2_000
+    static let personalWeeklyMinutesDefault = 600
 
     static let profileDisplayNameMaxLength = 32
     static let profileDisplayNameDefault = "You"
@@ -143,9 +153,25 @@ struct UserDefaultsSettingsStore {
         nonmutating set { userDefaults.set(Self.clamp(newValue, within: 1...10), forKey: Key.cyclesPerSession) }
     }
 
+    var lastSelectedFocusPresetID: String? {
+        get { userDefaults.string(forKey: Key.lastSelectedFocusPresetID) }
+        nonmutating set {
+            if let newValue {
+                userDefaults.set(newValue, forKey: Key.lastSelectedFocusPresetID)
+            } else {
+                userDefaults.removeObject(forKey: Key.lastSelectedFocusPresetID)
+            }
+        }
+    }
+
     var selectedSoundPackIdentifier: String {
         get { userDefaults.string(forKey: Key.selectedSoundPackIdentifier) ?? "voice-prompts" }
         nonmutating set { userDefaults.set(newValue, forKey: Key.selectedSoundPackIdentifier) }
+    }
+
+    var selectedVoiceOption: String {
+        get { userDefaults.string(forKey: Key.selectedVoiceOption) ?? VoiceOption.defaultSelection.rawValue }
+        nonmutating set { userDefaults.set(newValue, forKey: Key.selectedVoiceOption) }
     }
 
     var isAudioMuted: Bool {
@@ -174,9 +200,15 @@ struct UserDefaultsSettingsStore {
         nonmutating set { userDefaults.set(newValue, forKey: Key.selectedAppShellSection) }
     }
 
-    var showsDockIcon: Bool {
-        get { userDefaults.bool(forKey: Key.showsDockIcon) }
-        nonmutating set { userDefaults.set(newValue, forKey: Key.showsDockIcon) }
+    var appearancePreference: AppearancePreference {
+        get {
+            guard let raw = userDefaults.string(forKey: Key.appearancePreference),
+                  let preference = AppearancePreference(rawValue: raw) else {
+                return .system
+            }
+            return preference
+        }
+        nonmutating set { userDefaults.set(newValue.rawValue, forKey: Key.appearancePreference) }
     }
 
     /// Local display name for My profile (trimmed, max 32 characters).
@@ -198,7 +230,58 @@ struct UserDefaultsSettingsStore {
         return String(trimmed.prefix(profileDisplayNameMaxLength))
     }
 
-    /// Weekly XP goal (US-021). Clamped 100…5000 in steps of 100; default 1000.
+    /// Personal weekly focus minutes target (GAMIFICATION_SPEC). Clamped 100…2000; default 600.
+    var personalWeeklyMinutesTarget: Int {
+        get {
+            let raw = userDefaults.integer(forKey: Key.personalWeeklyMinutesTarget)
+            if userDefaults.object(forKey: Key.personalWeeklyMinutesTarget) == nil {
+                return Self.personalWeeklyMinutesDefault
+            }
+            return Self.clampPersonalWeeklyMinutes(raw)
+        }
+        nonmutating set {
+            let clamped = Self.clampPersonalWeeklyMinutes(newValue)
+            let previous = personalWeeklyMinutesTarget
+            userDefaults.set(clamped, forKey: Key.personalWeeklyMinutesTarget)
+            if clamped != previous {
+                personalTargetLastModified = Date()
+            }
+        }
+    }
+
+    var personalTargetLastModified: Date? {
+        get { userDefaults.object(forKey: Key.personalTargetLastModified) as? Date }
+        nonmutating set {
+            if let newValue {
+                userDefaults.set(newValue, forKey: Key.personalTargetLastModified)
+            } else {
+                userDefaults.removeObject(forKey: Key.personalTargetLastModified)
+            }
+        }
+    }
+
+    var gamificationXPBackfillCompleted: Bool {
+        get { userDefaults.bool(forKey: Key.gamificationXPBackfillCompleted) }
+        nonmutating set { userDefaults.set(newValue, forKey: Key.gamificationXPBackfillCompleted) }
+    }
+
+    /// When set, lifetime XP sums only `XPRecord` rows created at or after this instant.
+    var lifetimeXPResetAt: Date? {
+        get { userDefaults.object(forKey: Key.lifetimeXPResetAt) as? Date }
+        nonmutating set {
+            if let newValue {
+                userDefaults.set(newValue, forKey: Key.lifetimeXPResetAt)
+            } else {
+                userDefaults.removeObject(forKey: Key.lifetimeXPResetAt)
+            }
+        }
+    }
+
+    static func clampPersonalWeeklyMinutes(_ value: Int) -> Int {
+        clamp(value, within: personalWeeklyMinutesMin...personalWeeklyMinutesMax)
+    }
+
+    /// Weekly XP goal (legacy). Clamped 100…5000 in steps of 100; default 1000.
     var weeklyXPGoalXP: Int {
         get {
             let raw = userDefaults.integer(forKey: Key.weeklyXPGoalXP)
@@ -223,13 +306,14 @@ struct UserDefaultsSettingsStore {
             Key.roundsPerSession: 4,
             Key.cyclesPerSession: 1,
             Key.selectedSoundPackIdentifier: "voice-prompts",
+            Key.selectedVoiceOption: VoiceOption.defaultSelection.rawValue,
             Key.isAudioMuted: false,
             Key.blockedDomains: [String](),
             Key.blockedBundleIdentifiers: [String](),
             Key.selectedAppShellSection: "history",
-            // `.regular` activation is required for the system menu bar (Help, etc.). Accessory-only apps do not show app menus.
-            Key.showsDockIcon: true,
+            Key.appearancePreference: AppearancePreference.system.rawValue,
             Key.weeklyXPGoalXP: 1_000,
+            Key.personalWeeklyMinutesTarget: Self.personalWeeklyMinutesDefault,
             Key.profileDisplayName: Self.profileDisplayNameDefault,
             Key.blockerOnboardingPresented: false
         ])

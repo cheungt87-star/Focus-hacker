@@ -1,4 +1,4 @@
-import AVFoundation
+import AppKit
 import Foundation
 
 enum AudioSoundPack: String, CaseIterable, Identifiable, Sendable {
@@ -22,63 +22,101 @@ enum AudioSoundPack: String, CaseIterable, Identifiable, Sendable {
 }
 
 protocol AudioCuePlaying: AnyObject {
+    var voiceOption: VoiceOption { get set }
     func playTransitionCue(for event: TimerTransitionEvent, soundPack: AudioSoundPack, isMuted: Bool)
+    /// Subtle per-second chime during Get Ready; no spoken voice (voice plays on `.focusStarted`).
+    func playGetReadyTickCue(isMuted: Bool)
     func preview(soundPack: AudioSoundPack, isMuted: Bool)
+    /// Settings preview — ignores mute.
+    func previewVoiceOption(_ voiceOption: VoiceOption)
+    func previewChimesSoundPack()
 }
 
-final class AudioCueService: NSObject, AudioCuePlaying {
-    private let synthesizer = AVSpeechSynthesizer()
+final class AudioCueService: AudioCuePlaying {
+    var voiceOption: VoiceOption
+    private let voicePackPlayer: VoicePackPlayer
+
+    init(voiceOption: VoiceOption = .defaultSelection, voicePackPlayer: VoicePackPlayer = VoicePackPlayer()) {
+        self.voiceOption = voiceOption
+        self.voicePackPlayer = voicePackPlayer
+    }
 
     func playTransitionCue(for event: TimerTransitionEvent, soundPack: AudioSoundPack, isMuted: Bool) {
         guard !isMuted else {
             return
         }
 
-        let phrase = phrase(for: event, soundPack: soundPack)
-        guard let phrase else {
+        switch soundPack {
+        case .voicePrompts:
+            guard let phrase = voicePhrase(for: event) else {
+                return
+            }
+            voicePackPlayer.play(phrase: phrase, voiceOption: voiceOption, isMuted: isMuted)
+        case .chimes:
+            guard let soundName = chimeSoundName(for: event) else {
+                return
+            }
+            playSystemSound(named: soundName)
+        }
+    }
+
+    func playGetReadyTickCue(isMuted: Bool) {
+        guard !isMuted else {
             return
         }
-        speak(text: phrase, soundPack: soundPack)
+        playSystemSound(named: "Tink")
     }
 
     func preview(soundPack: AudioSoundPack, isMuted: Bool) {
         guard !isMuted else {
             return
         }
-        let text: String
+
         switch soundPack {
         case .voicePrompts:
-            text = "Voice prompts preview."
+            voicePackPlayer.play(phrase: .letsFocus, voiceOption: voiceOption, isMuted: isMuted)
         case .chimes:
-            text = "Ding."
+            playSystemSound(named: "Tink")
         }
-        speak(text: text, soundPack: soundPack)
+    }
+
+    func previewVoiceOption(_ voiceOption: VoiceOption) {
+        voicePackPlayer.play(phrase: .letsFocus, voiceOption: voiceOption, isMuted: false)
+    }
+
+    func previewChimesSoundPack() {
+        playSystemSound(named: "Tink")
     }
 }
 
 private extension AudioCueService {
-    func phrase(for event: TimerTransitionEvent, soundPack: AudioSoundPack) -> String? {
+    func voicePhrase(for event: TimerTransitionEvent) -> VoicePackPhrase? {
         switch event {
         case .focusStarted:
-            return soundPack == .voicePrompts ? "Get back to work." : "Ding ding."
+            return .letsFocus
         case .shortRestStarted, .longRestStarted:
-            return soundPack == .voicePrompts ? "Time to rest." : "Dong."
+            return .takeABreak
         case .sessionCompleted:
-            return soundPack == .voicePrompts ? "Great session. You did it." : "Ta da!"
+            return .sessionComplete
         case .sessionEndedEarly:
             return nil
         }
     }
 
-    func speak(text: String, soundPack: AudioSoundPack) {
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
+    func chimeSoundName(for event: TimerTransitionEvent) -> String? {
+        switch event {
+        case .focusStarted:
+            return "Tink"
+        case .shortRestStarted, .longRestStarted:
+            return "Pop"
+        case .sessionCompleted:
+            return "Glass"
+        case .sessionEndedEarly:
+            return nil
         }
+    }
 
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = soundPack == .voicePrompts ? 0.47 : 0.56
-        utterance.pitchMultiplier = soundPack == .voicePrompts ? 1.0 : 1.25
-        utterance.volume = 1.0
-        synthesizer.speak(utterance)
+    func playSystemSound(named name: String) {
+        NSSound(named: NSSound.Name(name))?.play()
     }
 }

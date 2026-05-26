@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FocusHacker — Design System</title>
+<meta name="description" content="The visual language behind FocusHacker. Colors, type, spacing, components, patterns.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="design-system.css">
+</head>
+<body class="fh-reset">
+
+<!-- ============ MASTHEAD ============ -->
+<header class="ds-masthead" data-screen-label="01 Masthead">
+  <div class="ds-bg" aria-hidden="true"></div>
+  <div class="ds-wrap masthead-grid">
+    <div>
+      <div class="ds-eyebrow">
+        <span class="ds-pip">v1.0</span>
+        <span>FocusHacker · Visual System</span>
+      </div>
+      <h1 class="ds-h1">
+        The visual language<br>
+        behind <em>focus that<br>feels like a&nbsp;win</em>.
+      </h1>
+      <p class="ds-lede">
+        Calm cream, lavender confidence, teal contrast, and a slap of peach when something matters. This is the system that powers every FocusHacker surface — from marketing pages to in-app screenshots.
+      </p>
+      <div class="ds-meta">
+        <span><strong>4</strong> foundations</span>
+        <span class="dot"></span>
+        <span><strong>12</strong> components</span>
+        <span class="dot"></span>
+        <span><strong>1</strong> tokens file</span>
+      </div>
+    </div>
+
+    <!-- Stack of representative chips -->
+    <div class="masthead-stack" aria-hidden="true">
+      <div class="ms-tile ms-1">
+        <span class="ms-cap">Primary</span>
+        <span class="ms-name">Lavender</span>
+        <span class="ms-hex">#B8A3D8</span>
+      </div>
+      <div class="ms-tile ms-2">
+        <span class="ms-cap">Contrast</span>
+        <span class="ms-name">Teal</span>
+        <span class="ms-hex">#2B5A5A</span>
+      </div>
+      <div class="ms-tile ms-3">
+        <span class="ms-cap">Warmth</span>
+        <span class="ms-name">Peach</span>
+        <span class="ms-hex">#F4A460</span>
+      </div>
+      <div class="ms-tile ms-4">
+        <span class="ms-cap">Surface</span>
+        <span class="ms-name">Cream</span>
+        <span class="ms-hex">#F5F0E8</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ TABLE OF CONTENTS ============ -->
+<nav class="ds-toc">
+  <div class="ds-wrap toc-inner">
+    <a href="#brand" class="toc-link"><span class="toc-num">00</span>Brand</a>
+    <a href="#color" class="toc-link"><span class="toc-num">01</span>Color</a>
+    <a href="#type" class="toc-link"><span class="toc-num">02</span>Type</a>
+    <a href="#space" class="toc-link"><span class="toc-num">03</span>Space &amp; Shape</a>
+    <a href="#components" class="toc-link"><span class="toc-num">04</span>Components</a>
+    <a href="#patterns" class="toc-link"><span class="toc-num">05</span>Patterns</a>
+    <a href="#tokens" class="toc-link"><span class="toc-num">06</span>Tokens</a>
+  </div>
+</nav>
+
+<!-- ============ 00 · BRAND ============ -->
+<section class="ds-section" id="brand" data-screen-label="02 Brand">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">00 · Identity</span>
+      <h2 class="ds-h2">A calm warmth, with sharp teeth.</h2>
+      <p class="ds-section-lede">
+        FocusHacker is built on a small contradiction: the soft cream-and-lavender warmth of a journaling app, paired with the kernel-level firmness of a real blocker. The visual system carries that same tension.
+      </p>
+    </div>
+
+    <div class="brand-grid">
+      <article class="brand-card">
+        <div class="brand-card-num">01</div>
+        <h3 class="brand-card-title">Warm, not soft.</h3>
+        <p>Cream backgrounds, serif headlines, hand-placed stickers. The page should feel like the inside of a good notebook — never sterile, never gamer-y.</p>
+      </article>
+      <article class="brand-card">
+        <div class="brand-card-num">02</div>
+        <h3 class="brand-card-title">Confident, not loud.</h3>
+        <p>Lavender carries the brand. Saturated colors live inside the app screenshots. The marketing surface never shouts; it lets the product do the shouting.</p>
+      </article>
+      <article class="brand-card">
+        <div class="brand-card-num">03</div>
+        <h3 class="brand-card-title">Italic emphasis.</h3>
+        <p>Real italics inside serif headlines — paired with a lavender chip behind the key phrase — are the brand's signature move. Use them sparingly.</p>
+      </article>
+      <article class="brand-card">
+        <div class="brand-card-num">04</div>
+        <h3 class="brand-card-title">Stickers, not stickers.</h3>
+        <p>The floating "+25 XP" pills aren't decoration — they're how we surface gamification without putting it in the chrome. They lean. They overlap. They're a&nbsp;voice.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 · COLOR ============ -->
+<section class="ds-section ds-section-warm" id="color" data-screen-label="03 Color">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">01 · Color</span>
+      <h2 class="ds-h2">Four hues, two registers.</h2>
+      <p class="ds-section-lede">
+        The system uses one quiet palette for marketing surfaces and one saturated palette reserved exclusively for in-app screenshots. They never mix.
+      </p>
+    </div>
+
+    <!-- Surfaces -->
+    <div class="color-group">
+      <header class="color-group-head">
+        <span class="color-group-num">01</span>
+        <h3 class="color-group-title">Surfaces</h3>
+        <p class="color-group-sub">The bones. Use these for every page background, card, and divider.</p>
+      </header>
+      <div class="swatch-grid">
+        <article class="swatch" style="--c: #F5F0E8;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Cream</span>
+            <span class="swatch-hex">#F5F0E8</span>
+            <span class="swatch-token">--surface-page</span>
+            <span class="swatch-use">Default page bg</span>
+          </div>
+        </article>
+        <article class="swatch" style="--c: #EDE4D2;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Cream Warm</span>
+            <span class="swatch-hex">#EDE4D2</span>
+            <span class="swatch-token">--surface-page-warm</span>
+            <span class="swatch-use">Section breaks</span>
+          </div>
+        </article>
+        <article class="swatch" style="--c: #FFFFFF;">
+          <div class="swatch-chip bordered"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">White</span>
+            <span class="swatch-hex">#FFFFFF</span>
+            <span class="swatch-token">--surface-raised</span>
+            <span class="swatch-use">Cards, modals</span>
+          </div>
+        </article>
+        <article class="swatch dark" style="--c: #1A1A1A;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Ink</span>
+            <span class="swatch-hex">#1A1A1A</span>
+            <span class="swatch-token">--surface-inverse</span>
+            <span class="swatch-use">Dark sections</span>
+          </div>
+        </article>
+        <article class="swatch" style="--c: #E0D8C9;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Line</span>
+            <span class="swatch-hex">#E0D8C9</span>
+            <span class="swatch-token">--line</span>
+            <span class="swatch-use">Hairlines on cream</span>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Accents -->
+    <div class="color-group">
+      <header class="color-group-head">
+        <span class="color-group-num">02</span>
+        <h3 class="color-group-title">Brand accents</h3>
+        <p class="color-group-sub">Lavender is the hero. Teal is its partner. Peach is the warmth.</p>
+      </header>
+
+      <div class="accent-row">
+        <!-- Lavender family -->
+        <div class="accent-family">
+          <div class="accent-family-head">
+            <span class="accent-role">Primary</span>
+            <h4 class="accent-name">Lavender</h4>
+            <p class="accent-desc">Headline highlight chip, primary CTA fill, brand mark.</p>
+          </div>
+          <div class="accent-chips">
+            <div class="accent-chip" style="background: #E8D9F0;">
+              <span class="ac-label">Soft</span>
+              <span class="ac-hex">#E8D9F0</span>
+            </div>
+            <div class="accent-chip" style="background: #B8A3D8;">
+              <span class="ac-label">Base</span>
+              <span class="ac-hex">#B8A3D8</span>
+            </div>
+            <div class="accent-chip dark" style="background: #C9B6E0;">
+              <span class="ac-label">Hover</span>
+              <span class="ac-hex">#C9B6E0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Teal family -->
+        <div class="accent-family">
+          <div class="accent-family-head">
+            <span class="accent-role">Contrast</span>
+            <h4 class="accent-name">Teal</h4>
+            <p class="accent-desc">Announce bar, voice block, dark accent on warm surfaces.</p>
+          </div>
+          <div class="accent-chips">
+            <div class="accent-chip light" style="background: #2B5A5A;">
+              <span class="ac-label">Base</span>
+              <span class="ac-hex">#2B5A5A</span>
+            </div>
+            <div class="accent-chip light" style="background: #1F4444;">
+              <span class="ac-label">Deep</span>
+              <span class="ac-hex">#1F4444</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peach family -->
+        <div class="accent-family">
+          <div class="accent-family-head">
+            <span class="accent-role">Warmth</span>
+            <h4 class="accent-name">Peach</h4>
+            <p class="accent-desc">Stickers, "NEW" pip, the moments that earn attention.</p>
+          </div>
+          <div class="accent-chips">
+            <div class="accent-chip" style="background: #F4A460;">
+              <span class="ac-label">Base</span>
+              <span class="ac-hex">#F4A460</span>
+            </div>
+            <div class="accent-chip" style="background: #F8C593;">
+              <span class="ac-label">Soft</span>
+              <span class="ac-hex">#F8C593</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In-app palette -->
+    <div class="color-group">
+      <header class="color-group-head">
+        <span class="color-group-num">03</span>
+        <h3 class="color-group-title">In-app palette</h3>
+        <p class="color-group-sub">
+          <strong>Reserve these for product screenshots only.</strong> Saturated colors break the calm of the marketing surface — but they're essential inside the Mac window mocks where the app needs to feel alive.
+        </p>
+      </header>
+      <div class="swatch-grid four">
+        <article class="swatch dark" style="--c: #FF4757;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Ember</span>
+            <span class="swatch-hex">#FF4757</span>
+            <span class="swatch-token">--app-ember</span>
+            <span class="swatch-use">Timer, focus state</span>
+          </div>
+        </article>
+        <article class="swatch" style="--c: #00D2D3;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Mint</span>
+            <span class="swatch-hex">#00D2D3</span>
+            <span class="swatch-token">--app-mint</span>
+            <span class="swatch-use">Rest state</span>
+          </div>
+        </article>
+        <article class="swatch" style="--c: #FFD93D;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Gold</span>
+            <span class="swatch-hex">#FFD93D</span>
+            <span class="swatch-token">--app-gold</span>
+            <span class="swatch-use">XP, achievement</span>
+          </div>
+        </article>
+        <article class="swatch dark" style="--c: #6C5CE7;">
+          <div class="swatch-chip"></div>
+          <div class="swatch-meta">
+            <span class="swatch-name">Violet</span>
+            <span class="swatch-hex">#6C5CE7</span>
+            <span class="swatch-token">--app-violet</span>
+            <span class="swatch-use">Level, progression</span>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Pairing rules -->
+    <div class="pairing-block">
+      <div class="pairing-head">
+        <span class="ds-tag tag-line">Pairing</span>
+        <h3 class="pairing-title">How they sit together.</h3>
+      </div>
+      <div class="pairing-grid">
+        <div class="pair-card pair-do">
+          <div class="pair-flag">Do</div>
+          <div class="pair-preview" style="background: #F5F0E8;">
+            <div class="pair-h">Focus that feels like a <em class="pair-em">win</em>.</div>
+            <button class="pair-btn">Download</button>
+          </div>
+          <p>Lavender chip behind italic phrase. Lavender CTA with ink border. Cream surface throughout.</p>
+        </div>
+        <div class="pair-card pair-do">
+          <div class="pair-flag">Do</div>
+          <div class="pair-preview" style="background: #2B5A5A; color: #fff;">
+            <div class="pair-h" style="color: #fff;">Backed by 50+ years of focus research.</div>
+            <span class="pair-link">Read how it works →</span>
+          </div>
+          <p>Teal surface, white text, lavender or peach for the link. The announce-bar formula.</p>
+        </div>
+        <div class="pair-card pair-dont">
+          <div class="pair-flag">Don't</div>
+          <div class="pair-preview" style="background: #F5F0E8;">
+            <div class="pair-h" style="color: #FF4757;">Focus that feels like a <em style="background: #00D2D3; color:#1A1A1A; padding: 0 6px; border-radius: 4px;">win</em>.</div>
+            <button class="pair-btn" style="background: #FF4757; color: #fff; border-color: #FF4757;">Download</button>
+          </div>
+          <p>App colors (ember + mint) on a marketing surface. Reads as a different product entirely.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 · TYPE ============ -->
+<section class="ds-section" id="type" data-screen-label="04 Type">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">02 · Typography</span>
+      <h2 class="ds-h2">Three faces, one voice.</h2>
+      <p class="ds-section-lede">
+        A serif for the soul, a sans for the structure, a monospace for the receipts.
+      </p>
+    </div>
+
+    <!-- Type families -->
+    <div class="type-families">
+      <article class="type-family">
+        <div class="type-family-head">
+          <span class="type-role">Display</span>
+          <h3 class="type-family-name" style="font-family: var(--font-display);">Lora</h3>
+          <p>Serif with real italics. Carries every headline. Weight 500 for headings, italic for emphasis.</p>
+        </div>
+        <div class="type-family-spec">
+          <span>Aa Bb 01</span>
+          <em>Aa Bb 01</em>
+        </div>
+        <code class="type-family-token">--font-display</code>
+      </article>
+
+      <article class="type-family">
+        <div class="type-family-head">
+          <span class="type-role">UI</span>
+          <h3 class="type-family-name" style="font-family: var(--font-ui);">Inter</h3>
+          <p>The workhorse. Body copy, buttons, navigation, labels. Weights 400 → 700.</p>
+        </div>
+        <div class="type-family-spec" style="font-family: var(--font-ui);">
+          <span>Aa Bb 01</span>
+          <strong>Aa Bb 01</strong>
+        </div>
+        <code class="type-family-token">--font-ui</code>
+      </article>
+
+      <article class="type-family">
+        <div class="type-family-head">
+          <span class="type-role">Mono</span>
+          <h3 class="type-family-name" style="font-family: var(--font-mono); letter-spacing: -0.02em;">IBM Plex Mono</h3>
+          <p>Numerics, taglines, timestamps, eyebrows. Anything that should feel measured.</p>
+        </div>
+        <div class="type-family-spec" style="font-family: var(--font-mono);">
+          <span>Aa Bb 01</span>
+          <strong>Aa Bb 01</strong>
+        </div>
+        <code class="type-family-token">--font-mono</code>
+      </article>
+    </div>
+
+    <!-- Type scale -->
+    <div class="type-scale-block">
+      <header class="color-group-head">
+        <span class="color-group-num">02</span>
+        <h3 class="color-group-title">Scale</h3>
+        <p class="color-group-sub">All headings use clamp() for fluid resizing. Tokens live in <code>tokens.css</code>.</p>
+      </header>
+      <div class="type-scale">
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-hero</span>
+            <span class="ts-dim">54 → 96px · Lora 500</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-display); font-size: clamp(40px, 5vw, 72px); font-weight: 500; letter-spacing: -0.015em; line-height: 1.05;">Focus that feels like a <em>win</em>.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-display</span>
+            <span class="ts-dim">44 → 80px · Lora 500</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-display); font-size: clamp(36px, 4vw, 56px); font-weight: 500; letter-spacing: -0.015em; line-height: 1.05;">Reclaim your focus in four steps.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-h2</span>
+            <span class="ts-dim">34 → 56px · Lora 500</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -0.015em;">Built on how your brain actually works.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-h3</span>
+            <span class="ts-dim">20 → 26px · Inter 600</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-ui); font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Identify your distractions.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-lede</span>
+            <span class="ts-dim">20px · Inter 400</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-ui); font-size: 20px; font-weight: 400; line-height: 1.55; color: var(--ink-2);">Every interruption costs you 23 minutes. FocusHacker blocks the distractions and makes your focus streak visible.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-body</span>
+            <span class="ts-dim">17px · Inter 400</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-ui); font-size: 17px; line-height: 1.55;">After a single distraction, the average knowledge worker takes over 23 minutes to fully refocus on the original task.</div>
+        </div>
+        <div class="ts-row">
+          <div class="ts-spec">
+            <span class="ts-token">--type-caption</span>
+            <span class="ts-dim">11–13px · Mono 600, tracked 0.18em</span>
+          </div>
+          <div class="ts-sample" style="font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted);">04 · The Reward</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · SPACE & SHAPE ============ -->
+<section class="ds-section ds-section-warm" id="space" data-screen-label="05 Space &amp; Shape">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">03 · Space &amp; Shape</span>
+      <h2 class="ds-h2">A 4-pixel rhythm.</h2>
+      <p class="ds-section-lede">
+        All spacing snaps to a 4px grid. Radii follow a small set of named sizes. Shadows are always layered — never a single harsh drop.
+      </p>
+    </div>
+
+    <!-- Spacing scale -->
+    <div class="shape-block">
+      <header class="color-group-head">
+        <span class="color-group-num">01</span>
+        <h3 class="color-group-title">Spacing</h3>
+        <p class="color-group-sub">Multiples of 4. Reach for tokens, not raw pixel values.</p>
+      </header>
+      <div class="space-list">
+        <div class="space-row"><span class="space-token">--space-1</span><span class="space-val">4px</span><div class="space-bar" style="width: 4px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-2</span><span class="space-val">8px</span><div class="space-bar" style="width: 8px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-3</span><span class="space-val">12px</span><div class="space-bar" style="width: 12px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-4</span><span class="space-val">16px</span><div class="space-bar" style="width: 16px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-6</span><span class="space-val">24px</span><div class="space-bar" style="width: 24px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-8</span><span class="space-val">32px</span><div class="space-bar" style="width: 32px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-12</span><span class="space-val">48px</span><div class="space-bar" style="width: 48px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-16</span><span class="space-val">64px</span><div class="space-bar" style="width: 64px;"></div></div>
+        <div class="space-row"><span class="space-token">--space-24</span><span class="space-val">96px</span><div class="space-bar" style="width: 96px;"></div></div>
+      </div>
+    </div>
+
+    <!-- Radii -->
+    <div class="shape-block">
+      <header class="color-group-head">
+        <span class="color-group-num">02</span>
+        <h3 class="color-group-title">Radii</h3>
+        <p class="color-group-sub">Five sizes. Cards round at 16, buttons at 12, pills are infinite.</p>
+      </header>
+      <div class="radii-grid">
+        <div class="radii-tile"><div class="rt-shape" style="border-radius: 8px;"></div><span class="rt-name">Small</span><code>--radius-sm · 8</code></div>
+        <div class="radii-tile"><div class="rt-shape" style="border-radius: 12px;"></div><span class="rt-name">Button</span><code>--radius-md · 12</code></div>
+        <div class="radii-tile"><div class="rt-shape" style="border-radius: 14px;"></div><span class="rt-name">Window</span><code>--radius-lg · 14</code></div>
+        <div class="radii-tile"><div class="rt-shape" style="border-radius: 16px;"></div><span class="rt-name">Card</span><code>--radius-card · 16</code></div>
+        <div class="radii-tile"><div class="rt-shape" style="border-radius: 24px;"></div><span class="rt-name">Card LG</span><code>--radius-card-lg · 24</code></div>
+        <div class="radii-tile"><div class="rt-shape pill"></div><span class="rt-name">Pill</span><code>--radius-pill · 999</code></div>
+      </div>
+    </div>
+
+    <!-- Shadows -->
+    <div class="shape-block">
+      <header class="color-group-head">
+        <span class="color-group-num">03</span>
+        <h3 class="color-group-title">Shadows</h3>
+        <p class="color-group-sub">Three lifts plus one signature "stamp" — the chunky cartoon offset used on overview cards.</p>
+      </header>
+      <div class="shadow-grid">
+        <div class="shadow-tile">
+          <div class="sh-card" style="box-shadow: var(--shadow-soft);">Soft</div>
+          <code>--shadow-soft</code>
+          <span>Inline UI lift</span>
+        </div>
+        <div class="shadow-tile">
+          <div class="sh-card" style="box-shadow: var(--shadow-card);">Card</div>
+          <code>--shadow-card</code>
+          <span>Default elevation</span>
+        </div>
+        <div class="shadow-tile">
+          <div class="sh-card" style="box-shadow: var(--shadow-mac);">Mac Window</div>
+          <code>--shadow-mac</code>
+          <span>Product mock</span>
+        </div>
+        <div class="shadow-tile">
+          <div class="sh-card stamp" style="box-shadow: var(--shadow-stamp); border: 2px solid var(--ink);">Stamp</div>
+          <code>--shadow-stamp</code>
+          <span>Hard-edged offset</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 · COMPONENTS ============ -->
+<section class="ds-section" id="components" data-screen-label="06 Components">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">04 · Components</span>
+      <h2 class="ds-h2">The pieces you reach for.</h2>
+      <p class="ds-section-lede">
+        Buttons, tags, stickers, badges, list items, window frames. Use these directly — every variant on the marketing site composes from this kit.
+      </p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Buttons</h3>
+        <p>Lavender primary with an ink border is the brand. Ghost for secondary actions. App Store button is its own thing.</p>
+      </div>
+      <div class="comp-stage">
+        <button class="dsb dsb-primary">Download</button>
+        <button class="dsb dsb-primary dsb-lg">Try it free for 7 days</button>
+        <button class="dsb dsb-ghost">See how it works →</button>
+        <button class="dsb dsb-outline">Learn more</button>
+        <a class="dsb dsb-appstore">
+          <span class="apple"></span>
+          <span><small>Download on the</small><strong>Mac App Store</strong></span>
+        </a>
+      </div>
+      <div class="comp-spec">
+        <code>.btn-primary</code> · <code>.btn-ghost</code> · <code>.btn-outline</code> · <code>.btn-app-store</code> · add <code>.btn-lg</code> for the larger pad
+      </div>
+    </div>
+
+    <!-- Section tags -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Section tags</h3>
+        <p>The all-caps mono chip that sits above every section heading. Five tones; the tone follows the section's emotional register.</p>
+      </div>
+      <div class="comp-stage">
+        <span class="ds-tag">Default</span>
+        <span class="ds-tag tag-lavender">Brand</span>
+        <span class="ds-tag tag-teal">Contrast</span>
+        <span class="ds-tag tag-peach">Warmth</span>
+        <span class="ds-tag tag-on-dark">On dark</span>
+      </div>
+      <div class="comp-spec">
+        <code>.section-tag</code> + modifier · <code>.tag-purple</code> · <code>.tag-mint</code> · <code>.tag-gold</code> · <code>.tag-light</code>
+      </div>
+    </div>
+
+    <!-- Stickers -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Stickers</h3>
+        <p>The signature floating gamification chip. Always overlaps a mac window. Always rotated 3–6°. Never centered.</p>
+      </div>
+      <div class="comp-stage sticker-stage">
+        <div class="ds-sticker peach" style="transform: rotate(-6deg);">
+          <span class="ic">⚡</span><span>+25 XP</span>
+        </div>
+        <div class="ds-sticker ember" style="transform: rotate(5deg);">
+          <span class="ic">🔥</span><span>7-day streak</span>
+        </div>
+        <div class="ds-sticker lavender" style="transform: rotate(-3deg);">
+          <span class="ic">🏆</span><span>Level 7</span>
+        </div>
+        <div class="ds-sticker mint" style="transform: rotate(4deg);">
+          <span class="ic">🛡️</span><span>14 apps blocked</span>
+        </div>
+      </div>
+      <div class="comp-spec">
+        <code>.sticker</code> + tone (<code>.gold</code>, <code>.coral</code>, <code>.purple</code>, <code>.mint</code>) · always position absolutely
+      </div>
+    </div>
+
+    <!-- Step marker -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Step marker</h3>
+        <p>Used to flag the four steps in the protocol. The number is in a circle; the label is in mono caps. Sits above the section tag.</p>
+      </div>
+      <div class="comp-stage stamp-stage">
+        <div class="ds-step-marker">
+          <span class="sm-badge" style="background: var(--app-ember); color: #fff;">01</span>
+          <span class="sm-text">Step 01 of 04</span>
+        </div>
+        <div class="ds-step-marker">
+          <span class="sm-badge" style="background: var(--app-mint); color: var(--ink);">02</span>
+          <span class="sm-text">Step 02 of 04</span>
+        </div>
+        <div class="ds-step-marker">
+          <span class="sm-badge" style="background: var(--peach); color: var(--ink);">03</span>
+          <span class="sm-text">Step 03 of 04</span>
+        </div>
+        <div class="ds-step-marker">
+          <span class="sm-badge" style="background: var(--app-gold); color: var(--ink);">04</span>
+          <span class="sm-text">Step 04 of 04</span>
+        </div>
+      </div>
+      <div class="comp-spec">
+        <code>.step-marker</code> · uses <code>--shadow-stamp-sm</code> · the badge tone shifts per section to match its accent
+      </div>
+    </div>
+
+    <!-- Check list -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Check list</h3>
+        <p>The body-copy bullet list used inside every feature section. The check circle adopts the section's accent color.</p>
+      </div>
+      <div class="comp-stage block-stage">
+        <ul class="ds-check-list">
+          <li><span class="check">✓</span><span><strong>You choose what to block.</strong> Apps, websites, full domains — locked the moment your session starts.</span></li>
+          <li><span class="check">✓</span><span><strong>No willpower required.</strong> Kernel-level enforcement means the block can't be reasoned with.</span></li>
+          <li><span class="check">✓</span><span><strong>Everything stays on your Mac.</strong> No proxy, no cloud, no data collection.</span></li>
+        </ul>
+      </div>
+      <div class="comp-spec"><code>.check-list</code> · <code>.check-list .checkbox</code> takes the section accent</div>
+    </div>
+
+    <!-- Pip / pill -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Status pips &amp; pills</h3>
+        <p>Pulsing dots, status indicators, eyebrow pips. Small but everywhere.</p>
+      </div>
+      <div class="comp-stage block-stage row-stage">
+        <span class="ds-hero-eyebrow">
+          <span class="pip">NEW</span>
+          <span>Built natively for macOS Sequoia</span>
+        </span>
+        <span class="ds-status-pill"><span class="dot"></span>Active</span>
+        <span class="ds-mode-pill"><span class="pulse"></span>Focus Session</span>
+        <span class="ds-mini-badge gold">🏆 7-day streak</span>
+      </div>
+      <div class="comp-spec"><code>.pip</code> · <code>.status-pill</code> · <code>.badge-mode</code> · <code>.mini-badge</code></div>
+    </div>
+
+    <!-- Mac window -->
+    <div class="comp-block">
+      <div class="comp-block-head">
+        <h3 class="comp-title">Mac window</h3>
+        <p>Every product screenshot sits inside one of these. Light or dark titlebar. Subtle 3D tilt that flattens on hover.</p>
+      </div>
+      <div class="comp-stage window-stage">
+        <div class="ds-mac">
+          <div class="ds-mac-bar">
+            <span class="md r"></span><span class="md y"></span><span class="md g"></span>
+            <span class="ds-mac-title">FocusHacker</span>
+            <span style="width: 36px;"></span>
+          </div>
+          <div class="ds-mac-body" style="background: linear-gradient(160deg, #363A47, #2F3542); color:#fff; padding: 40px; text-align:center;">
+            <span class="ds-mode-pill" style="color: var(--app-ember); background: rgba(255,71,87,0.12); border: none; margin-bottom: 18px;"><span class="pulse"></span>Focus Session</span>
+            <div style="font-family: var(--font-mono); font-weight:700; font-size: 64px; color: var(--app-ember); letter-spacing: -2px; line-height: 1;">24:37</div>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 10px;">Session 2 of 4 · You're on fire</div>
+          </div>
+        </div>
+        <div class="ds-mac">
+          <div class="ds-mac-bar light">
+            <span class="md r"></span><span class="md y"></span><span class="md g"></span>
+            <span class="ds-mac-title">Blocklist — Deep Work</span>
+            <span style="width: 36px;"></span>
+          </div>
+          <div class="ds-mac-body" style="background: #fff; padding: 22px;">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <span style="font-family: var(--font-display); font-weight: 600; font-size: 17px;">Deep Work blocklist</span>
+              <span class="ds-status-pill"><span class="dot"></span>Active</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="bl-row"><span class="bl-ic" style="background: linear-gradient(135deg, #1DA1F2, #0a85d4);">𝕏</span><span>Twitter / X</span><span class="bl-tog"></span></div>
+              <div class="bl-row"><span class="bl-ic" style="background: linear-gradient(135deg, #FF0000, #cc0000);">▶</span><span>YouTube</span><span class="bl-tog"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="comp-spec"><code>.mac-window</code> + <code>.mac-titlebar</code> (add <code>.dark</code> for the dark variant)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 · PATTERNS ============ -->
+<section class="ds-section ds-section-warm" id="patterns" data-screen-label="07 Patterns">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag">05 · Patterns</span>
+      <h2 class="ds-h2">How they go together.</h2>
+      <p class="ds-section-lede">
+        Three signature compositions show up everywhere. Learn these and the rest of the site builds itself.
+      </p>
+    </div>
+
+    <!-- Pattern 1: italic + chip -->
+    <article class="pattern-card">
+      <div class="pattern-head">
+        <span class="pattern-num">01</span>
+        <h3 class="pattern-title">Italic phrase, lavender chip.</h3>
+        <p>Every headline ends with an italic word or two, set inside a soft-lavender background block. Never use the chip on more than one phrase per heading.</p>
+      </div>
+      <div class="pattern-demo">
+        <p style="font-family: var(--font-display); font-size: clamp(32px, 4vw, 56px); font-weight: 500; letter-spacing: -0.015em; line-height: 1.05; max-width: 720px;">
+          Reclaim your focus in <em class="pat-em">four steps</em>.
+        </p>
+      </div>
+      <pre class="pattern-code"><code>&lt;h2&gt;Reclaim your focus in &lt;em class="banner-em"&gt;four steps&lt;/em&gt;.&lt;/h2&gt;</code></pre>
+    </article>
+
+    <!-- Pattern 2: accent card with top strip -->
+    <article class="pattern-card">
+      <div class="pattern-head">
+        <span class="pattern-num">02</span>
+        <h3 class="pattern-title">Stamp card with accent strip.</h3>
+        <p>The hero overview cards — bold ink border, hard offset shadow, and a colored strip along the top. The strip color carries the card's emotional tone.</p>
+      </div>
+      <div class="pattern-demo cards-demo">
+        <div class="pat-card" style="--ov-accent: var(--app-ember);">
+          <header><span class="pn">01</span><span class="pk">The problem</span></header>
+          <div class="ps"><span class="big">23</span><span class="unit">min</span></div>
+          <h4>One interruption. Twenty-three minutes lost.</h4>
+        </div>
+        <div class="pat-card" style="--ov-accent: var(--app-violet);">
+          <header><span class="pn">02</span><span class="pk">The principle</span></header>
+          <div class="ps"><span class="big">25</span><span class="plus">+</span><span class="big alt">5</span></div>
+          <h4>Your brain works in sprints, not marathons.</h4>
+        </div>
+        <div class="pat-card" style="--ov-accent: var(--app-gold);">
+          <header><span class="pn">04</span><span class="pk">The reward</span></header>
+          <div class="ps"><span class="plus xp">+</span><span class="big">50</span><span class="unit">XP</span></div>
+          <h4>Dopamine, on the way out.</h4>
+        </div>
+      </div>
+      <pre class="pattern-code"><code>&lt;article class="ov-card tone-ember"&gt; ... &lt;/article&gt;
+/* tones: tone-ember · tone-purple · tone-mint · tone-gold */</code></pre>
+    </article>
+
+    <!-- Pattern 3: window + sticker -->
+    <article class="pattern-card">
+      <div class="pattern-head">
+        <span class="pattern-num">03</span>
+        <h3 class="pattern-title">Window + leaning sticker.</h3>
+        <p>Every product screenshot has at least one sticker overlapping its corner. The sticker tells you what the screenshot earns you in one beat.</p>
+      </div>
+      <div class="pattern-demo window-demo">
+        <div class="ds-sticker peach" style="position: absolute; top: -14px; left: -16px; transform: rotate(-6deg); z-index: 4;">
+          <span class="ic">⚡</span><span>+25 XP</span>
+        </div>
+        <div class="ds-sticker ember" style="position: absolute; bottom: 24px; right: -22px; transform: rotate(5deg); z-index: 4;">
+          <span class="ic">🔥</span><span>7-day streak</span>
+        </div>
+        <div class="ds-mac flat">
+          <div class="ds-mac-bar">
+            <span class="md r"></span><span class="md y"></span><span class="md g"></span>
+            <span class="ds-mac-title">FocusHacker</span>
+            <span style="width: 36px;"></span>
+          </div>
+          <div class="ds-mac-body" style="background: linear-gradient(160deg, #363A47, #2F3542); color:#fff; padding: 36px; text-align:center;">
+            <span class="ds-mode-pill" style="color: var(--app-ember); background: rgba(255,71,87,0.12); border: none; margin-bottom: 14px;"><span class="pulse"></span>Focus Session</span>
+            <div style="font-family: var(--font-mono); font-weight:700; font-size: 72px; color: var(--app-ember); letter-spacing: -2px; line-height: 1;">12:04</div>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 10px;">Halfway there! Keep going 💪</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ 06 · TOKENS ============ -->
+<section class="ds-section ds-section-dark" id="tokens" data-screen-label="08 Tokens">
+  <div class="ds-wrap">
+    <div class="ds-section-head">
+      <span class="ds-tag tag-on-dark">06 · Tokens</span>
+      <h2 class="ds-h2" style="color: #fff;">Drop it into any project.</h2>
+      <p class="ds-section-lede" style="color: rgba(255,255,255,0.7);">
+        Everything above resolves to a single <code>tokens.css</code> file. Link it once, then reach for the named variables everywhere else.
+      </p>
+    </div>
+
+    <div class="token-grid">
+      <div class="token-card">
+        <span class="tc-step">Step 1</span>
+        <h3>Link the file.</h3>
+        <pre><code>&lt;link rel="stylesheet" href="tokens.css"&gt;</code></pre>
+      </div>
+      <div class="token-card">
+        <span class="tc-step">Step 2</span>
+        <h3>Reach for the vars.</h3>
+        <pre><code>.hero {
+  background: var(--surface-page);
+  color: var(--ink);
+  font-family: var(--font-display);
+}
+.btn-primary {
+  background: var(--lavender);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glow-lavender);
+}</code></pre>
+      </div>
+      <div class="token-card">
+        <span class="tc-step">Step 3</span>
+        <h3>Stay inside the system.</h3>
+        <p>No raw hex codes outside the screenshot palette. No font names outside <code>--font-display / --font-ui / --font-mono</code>. No spacing values that aren't on the 4px grid.</p>
+      </div>
+    </div>
+
+    <div class="token-summary">
+      <div class="ts-col">
+        <h4>Colors</h4>
+        <ul>
+          <li><code>--surface-page</code><span>#F5F0E8</span></li>
+          <li><code>--surface-raised</code><span>#FFFFFF</span></li>
+          <li><code>--surface-inverse</code><span>#1A1A1A</span></li>
+          <li><code>--ink</code><span>#1A1A1A</span></li>
+          <li><code>--ink-muted</code><span>#6B6B6B</span></li>
+          <li><code>--lavender</code><span>#B8A3D8</span></li>
+          <li><code>--lavender-soft</code><span>#E8D9F0</span></li>
+          <li><code>--teal</code><span>#2B5A5A</span></li>
+          <li><code>--peach</code><span>#F4A460</span></li>
+          <li><code>--line</code><span>#E0D8C9</span></li>
+        </ul>
+      </div>
+      <div class="ts-col">
+        <h4>Type</h4>
+        <ul>
+          <li><code>--font-display</code><span>Lora</span></li>
+          <li><code>--font-ui</code><span>Inter</span></li>
+          <li><code>--font-mono</code><span>IBM Plex Mono</span></li>
+          <li><code>--type-hero</code><span>54–96px</span></li>
+          <li><code>--type-h2</code><span>34–56px</span></li>
+          <li><code>--type-body</code><span>17px</span></li>
+        </ul>
+      </div>
+      <div class="ts-col">
+        <h4>Shape</h4>
+        <ul>
+          <li><code>--radius-md</code><span>12px</span></li>
+          <li><code>--radius-card</code><span>16px</span></li>
+          <li><code>--radius-card-lg</code><span>24px</span></li>
+          <li><code>--radius-pill</code><span>999px</span></li>
+          <li><code>--shadow-soft</code><span>—</span></li>
+          <li><code>--shadow-card</code><span>—</span></li>
+          <li><code>--shadow-mac</code><span>—</span></li>
+          <li><code>--shadow-stamp</code><span>signature</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="ds-footer">
+  <div class="ds-wrap ds-footer-inner">
+    <div>
+      <div class="ds-brand">
+        <span class="ds-brand-mark">FH</span>
+        FocusHacker
+      </div>
+      <p>Design System · v1.0 · May 2026</p>
+    </div>
+    <div class="ds-footer-meta">
+      <span>tokens.css · 1 file · drop-in ready</span>
+      <span>© 2026 FocusHacker</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

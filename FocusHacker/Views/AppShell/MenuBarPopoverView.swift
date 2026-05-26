@@ -6,222 +6,358 @@ struct MenuBarPopoverView: View {
     let openFullWindow: () -> Void
     let presentPaywall: () -> Void
 
-    private var chrome: TimerChromeTheme { viewModel.timerChromeTheme }
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var systemAppearanceRefreshToken = 0
 
     private var timerConfigurationEnabled: Bool {
         viewModel.state.sessionState == .idle
+    }
+
+    private var effectiveColorScheme: ColorScheme {
+        viewModel.appearancePreference.resolvedColorScheme(fallback: colorScheme)
+    }
+
+    private var popoverPalette: MenuBarPopoverPalette {
+        MenuBarPopoverPalette.resolve(for: effectiveColorScheme)
+    }
+
+    private var sessionChrome: TimerChromeTheme {
+        TimerChromeTheme(sessionState: viewModel.state.sessionState, colorScheme: effectiveColorScheme)
     }
 
     var body: some View {
         ZStack {
             popoverChromeContent
             if viewModel.showsEndSessionConfirmation {
-                EndSessionConfirmationPanel(
+                MacDSEndSessionConfirmationPanel(
                     isPresented: $viewModel.showsEndSessionConfirmation,
-                    theme: chrome,
                     onConfirm: { viewModel.confirmEndSession() }
                 )
+                .preferredColorScheme(effectiveColorScheme)
                 .transition(.opacity.combined(with: .scale(scale: 0.98)))
                 .zIndex(1)
             }
         }
         .animation(FocusHackerMotion.easeFast, value: viewModel.showsEndSessionConfirmation)
+        .environment(\.appUISurface, .mainWindow)
+        .environment(\.menuBarExtraWindow, true)
+        .environment(\.timerChromeTheme, sessionChrome)
+        .environment(\.menuBarPopoverPalette, popoverPalette)
+        .preferredColorScheme(viewModel.appearancePreference.preferredColorScheme)
+        .id("\(viewModel.appearancePreference.rawValue)-\(systemAppearanceRefreshToken)")
+        .onChange(of: viewModel.appearancePreference) { preference in
+            MenuBarExtraAppearanceController.apply(preference: preference)
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: Notification.Name("AppleInterfaceThemeChangedNotification")
+            )
+        ) { _ in
+            guard viewModel.appearancePreference == .system else { return }
+            systemAppearanceRefreshToken += 1
+            MenuBarExtraAppearanceController.apply(preference: .system)
+        }
+        .onAppear {
+            MenuBarExtraAppearanceController.apply(preference: viewModel.appearancePreference)
+            MenuBarExtraPanelController.beginOutsideClickMonitoring()
+        }
+        .onDisappear {
+            MenuBarExtraPanelController.stopOutsideClickMonitoring()
+        }
+    }
+
+    /// Only lock/banner stacks can exceed a comfortable panel height; preset and custom configure layouts expand the window instead.
+    private var popoverRequiresScrolling: Bool {
+        MenuBarPopoverLayout.requiresVerticalScrolling(
+            allowsAppUse: purchaseEntitlements.evaluation.allowsAppUse,
+            hasCompletionBanner: viewModel.completionBannerText != nil
+        )
     }
 
     private var popoverChromeContent: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing4) {
-            if !purchaseEntitlements.evaluation.allowsAppUse {
-                Text("FocusHacker is locked until StoreKit recognises a lifetime purchase or introductory access.")
-                    .font(.fhCaption)
-                    .foregroundStyle(chrome.accentTimer)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Button("Show unlock window…") {
-                    presentPaywall()
+        Group {
+            if popoverRequiresScrolling {
+                ScrollView(.vertical, showsIndicators: true) {
+                    popoverBody
                 }
-                .buttonStyle(.borderedProminent)
+                .frame(maxHeight: MenuBarPopoverLayout.maxScrollableHeight)
+            } else {
+                popoverBody
+            }
+        }
+        .frame(width: MenuBarPopoverLayout.width)
+        .fixedSize(horizontal: false, vertical: !popoverRequiresScrolling)
+        .background(MenuBarExtraWindowSizeFitter())
+        .background(popoverPalette.background)
+        .onAppear {
+            viewModel.restoreFocusPresetSelectionIfNeeded()
+        }
+    }
 
-                Divider()
-                    .background(chrome.borderDefault)
+    private var popoverBody: some View {
+        VStack(alignment: .leading, spacing: DesignSpacing.spacing5) {
+            if !purchaseEntitlements.evaluation.allowsAppUse {
+                paywallLockSection
             }
 
             if let completionBannerText = viewModel.completionBannerText {
-                Text(completionBannerText)
-                    .font(.fhCaption)
-                    .foregroundStyle(Color.fhColorGold)
+                completionBanner(completionBannerText)
             }
 
-            TimerThreeRowSlabView(
+            FocusSessionScreenView(
                 viewModel: viewModel,
                 layout: .menuBarPopover,
+                configurationEnabled: timerConfigurationEnabled
+                    && purchaseEntitlements.evaluation.allowsAppUse,
                 purchaseAllowsUse: purchaseEntitlements.evaluation.allowsAppUse,
-                onStartSession: { viewModel.startSession() },
+                onStartSession: { viewModel.startSessionFromMenuBar() },
                 onPresentPaywall: { presentPaywall() },
-                onRequestEndSession: { viewModel.requestEndSession() }
+                onTogglePause: { viewModel.togglePause() },
+                onRequestEndSession: { viewModel.requestEndSession() },
+                onCancelGetReady: { viewModel.cancelMenuBarGetReadyCountdown() }
             )
-
-            HStack(spacing: DesignSpacing.spacing3) {
-                Text("Lv \(viewModel.playerLevel)")
-                    .font(.fhCaption.weight(.semibold))
-                    .foregroundStyle(chrome.textPrimary)
-                Text(viewModel.playerLevelTitle)
-                    .font(.fhCaption)
-                    .foregroundStyle(chrome.textSecondary)
-                Spacer(minLength: 0)
-                Text("\(viewModel.weeklyXPEarned)/\(viewModel.weeklyXPGoal) XP")
-                    .font(.fhCaption.weight(.semibold))
-                    .foregroundStyle(Color.fhColorGold)
-            }
             .frame(maxWidth: .infinity)
 
-            Divider()
-                .frame(maxWidth: .infinity)
-                .background(chrome.borderDefault)
-
-            VStack(alignment: .center, spacing: DesignSpacing.spacing4) {
-                TimerSessionConfigurationForm(
-                    viewModel: viewModel,
-                    isEnabled: timerConfigurationEnabled,
-                    sectionTitle: "Configure session"
-                )
-
-                Divider()
-                    .frame(maxWidth: .infinity)
-                    .background(chrome.borderDefault)
-
-                VStack(alignment: .center, spacing: DesignSpacing.spacing3) {
-                    Button("Open FocusHacker") {
-                        openFullWindow()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-                    .disabled(!purchaseEntitlements.evaluation.allowsAppUse)
-
-                    Text("Blocked sites and apps: open the window, then choose Blocked Items. Browser permissions: Settings → Browser blocking.")
-                        .font(.fhCaption)
-                        .foregroundStyle(chrome.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    HStack {
-                        Spacer(minLength: 0)
-                        Menu {
-                            Button("Quit", role: .destructive) {
-                                NSApplication.shared.terminate(nil)
-                            }
-                        } label: {
-                            Label("More options", systemImage: "line.3.horizontal")
-                                .labelStyle(.iconOnly)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(chrome.textPrimary)
-                                .frame(width: 32, height: 32)
-                                .contentShape(Rectangle())
-                        }
-                        .menuStyle(.borderlessButton)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
+            MenuBarPopoverActions(
+                viewModel: viewModel,
+                purchaseAllowsUse: purchaseEntitlements.evaluation.allowsAppUse,
+                onOpenFullWindow: { openFullWindow() },
+                onQuit: { NSApplication.shared.terminate(nil) }
+            )
         }
         .frame(maxWidth: .infinity)
-        .padding(DesignSpacing.spacing4)
-        .frame(width: 384)
-        .background(chrome.bgPanel)
-        .environment(\.timerChromeTheme, chrome)
-        .onAppear {
-            viewModel.refreshGamificationStats()
-        }
+        .padding(DesignSpacing.spacing5)
     }
-}
 
-// MARK: - End session confirmation (in-window)
+    private var paywallLockSection: some View {
+        VStack(alignment: .leading, spacing: DesignSpacing.spacing3) {
+            Text("FocusHacker is locked until StoreKit recognises a lifetime purchase or introductory access.")
+                .font(.macDSHelper)
+                .foregroundStyle(popoverPalette.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
 
-/// SwiftUI `.alert` actions are unreliable when presented from a `MenuBarExtra` window on macOS: the
-/// sheet can dismiss without invoking the destructive button’s handler. Keeping confirmation in the
-/// same window preserves hit testing and guarantees `onConfirm` runs.
-struct EndSessionConfirmationPanel: View {
-    @Binding var isPresented: Bool
-    var theme: TimerChromeTheme
-    var onConfirm: () -> Void
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    isPresented = false
-                }
-
-            VStack(spacing: DesignSpacing.spacing4) {
-                Image(systemName: "circle.grid.cross.fill")
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(theme.textPrimary)
-                    .accessibilityHidden(true)
-
-                Text("End Session?")
-                    .font(.fhBody.weight(.bold))
-                    .foregroundStyle(theme.textPrimary)
-                    .multilineTextAlignment(.center)
-
-                Text("Ending early forfeits all XP - continue?")
-                    .font(.fhCaption)
-                    .foregroundStyle(theme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: DesignSpacing.spacing3) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
-                    .buttonStyle(TimerBrutalistOutlineButtonStyle(theme: theme))
-                    .keyboardShortcut(.cancelAction)
-
-                    Button("End Session") {
-                        onConfirm()
-                    }
-                    .buttonStyle(EndSessionDestructiveOutlineButtonStyle(theme: theme))
-                    .keyboardShortcut(.defaultAction)
-                }
+            Button("Show unlock window…") {
+                presentPaywall()
             }
-            .padding(DesignSpacing.spacing5)
-            .frame(maxWidth: 320)
-            .background(
-                RoundedRectangle(cornerRadius: DesignRadius.md)
-                    .fill(theme.bgPanel)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignRadius.md)
-                            .stroke(theme.borderDefault, lineWidth: 1)
-                    )
-            )
-            .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+            .buttonStyle(MenuBarPopoverPrimaryButtonStyle())
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("End session confirmation")
-        .onExitCommand {
-            isPresented = false
+    }
+
+    private func completionBanner(_ text: String) -> some View {
+        HStack(spacing: DesignSpacing.spacing3) {
+            Image(systemName: "sparkles")
+                .foregroundStyle(popoverPalette.teal)
+            Text(text)
+                .font(.macDSBody.weight(.semibold))
+                .foregroundStyle(popoverPalette.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(DesignSpacing.spacing3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                .fill(popoverPalette.cellFill)
+                .overlay(
+                    RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                        .stroke(popoverPalette.cellBorder, lineWidth: 0.5)
+                )
+        )
     }
 }
 
-private struct EndSessionDestructiveOutlineButtonStyle: ButtonStyle {
-    let theme: TimerChromeTheme
+// MARK: - Popover palette (scheme-explicit — avoids NSColor dynamicProvider in MenuBarExtra)
+
+struct MenuBarPopoverPalette: Equatable {
+    let background: Color
+    let textPrimary: Color
+    let textMuted: Color
+    let textMutedSecondary: Color
+    let teal: Color
+    let cellFill: Color
+    let cellBorder: Color
+    let grayOutline: Color
+    let onTealForeground: Color
+    let timerHeroOnTealPrimary: Color
+    let timerHeroOnTealSecondary: Color
+    let metricsBandOverlay: Color
+    let metricsBandDivider: Color
+    let metricsLabelOnHero: Color
+    let metricsValueOnHero: Color
+    let actionBandOverlay: Color
+    let actionBandOverlayStrong: Color
+    let primaryButtonFill: Color
+    let primaryButtonForeground: Color
+
+    static func resolve(for colorScheme: ColorScheme) -> MenuBarPopoverPalette {
+        let metricsOverlayLight = Color.white.opacity(0.15)
+        let metricsOverlayDark = Color.black.opacity(0.24)
+        let actionOverlayLight = Color.black.opacity(0.28)
+        let actionOverlayDark = Color.black.opacity(0.35)
+        let actionOverlayStrongLight = Color.black.opacity(0.35)
+        let actionOverlayStrongDark = Color.black.opacity(0.42)
+
+        return MenuBarPopoverPalette(
+            background: MacDS.Resolved.backgroundPrimary(for: colorScheme),
+            textPrimary: MacDS.Resolved.textPrimary(for: colorScheme),
+            textMuted: MacDS.Resolved.textSecondary(for: colorScheme),
+            textMutedSecondary: MacDS.Resolved.textTertiary(for: colorScheme),
+            teal: MacDS.Resolved.accentTeal(for: colorScheme),
+            cellFill: MacDS.Resolved.accentTealLightest(for: colorScheme),
+            cellBorder: MacDS.Resolved.accentTealCellBorder(for: colorScheme),
+            grayOutline: MacDS.Resolved.border(for: colorScheme),
+            onTealForeground: .white,
+            timerHeroOnTealPrimary: .white,
+            timerHeroOnTealSecondary: Color.white.opacity(0.92),
+            metricsBandOverlay: colorScheme == .dark ? metricsOverlayDark : metricsOverlayLight,
+            metricsBandDivider: Color.white.opacity(0.30),
+            metricsLabelOnHero: Color.white.opacity(0.88),
+            metricsValueOnHero: Color.white.opacity(0.92),
+            actionBandOverlay: colorScheme == .dark ? actionOverlayDark : actionOverlayLight,
+            actionBandOverlayStrong: colorScheme == .dark ? actionOverlayStrongDark : actionOverlayStrongLight,
+            primaryButtonFill: .white,
+            primaryButtonForeground: MacDS.Resolved.accentTeal(for: colorScheme)
+        )
+    }
+
+    func actionBandOverlay(usesGetReadyChrome: Bool) -> Color {
+        usesGetReadyChrome ? actionBandOverlayStrong : actionBandOverlay
+    }
+}
+
+private struct MenuBarPopoverPaletteKey: EnvironmentKey {
+    static let defaultValue = MenuBarPopoverPalette.resolve(for: .light)
+}
+
+extension EnvironmentValues {
+    var menuBarPopoverPalette: MenuBarPopoverPalette {
+        get { self[MenuBarPopoverPaletteKey.self] }
+        set { self[MenuBarPopoverPaletteKey.self] = newValue }
+    }
+}
+
+enum MenuBarPopoverLayout {
+    static let width: CGFloat = 384
+    static let timerCornerRadius: CGFloat = 8
+    static let unifiedTimerCornerRadius: CGFloat = 8
+    static let cardCornerRadius: CGFloat = 6
+    static let primaryButtonCornerRadius: CGFloat = 8
+    static let timerHeroHeight: CGFloat = 152
+    static let metricsBandHeight: CGFloat = 46
+    static let actionBandVerticalPadding: CGFloat = 12
+    static let actionBandButtonVerticalPadding: CGFloat = 12
+    /// Minimum height for the standalone idle Start focus primary CTA.
+    static let primaryStartButtonMinHeight: CGFloat = 56
+    static let presetSelectorMinHeight: CGFloat = 44
+    static let presetNavButtonSize: CGFloat = 32
+
+    /// Config + footer metric bands + fixed hero height (action band is dynamic).
+    static var unifiedTimerCardCoreHeight: CGFloat {
+        configBandHeight + timerHeroHeight + footerBandHeight
+    }
+
+    static let configBandHeight: CGFloat = metricsBandHeight
+    static let footerBandHeight: CGFloat = metricsBandHeight
+
+    /// Cap when paywall or completion banner stacks make the popover taller than the screen.
+    static let maxScrollableHeight: CGFloat = 600
+
+    /// Custom session configuration expands the panel; scrolling is reserved for lock/banner overlays.
+    static func requiresVerticalScrolling(allowsAppUse: Bool, hasCompletionBanner: Bool) -> Bool {
+        !allowsAppUse || hasCompletionBanner
+    }
+
+    /// Maximum panel height before clamping (menu bar anchor, grow downward).
+    static func maxHeightBelowMenuBar(for window: NSWindow) -> CGFloat {
+        guard let screen = window.screen ?? NSScreen.main else { return 800 }
+        let margin: CGFloat = 12
+        let spaceBelowMenuBar = window.frame.maxY - screen.visibleFrame.minY - margin
+        return max(320, spaceBelowMenuBar)
+    }
+}
+
+// MARK: - Button styles
+
+struct MenuBarPopoverPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.menuBarPopoverPalette) private var palette
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 14, weight: .semibold))
-            .textCase(.uppercase)
-            .tracking(0.55)
-            .foregroundStyle(Color.fhColorCoral)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 12)
+            .font(.macDSBody.weight(.semibold))
+            .foregroundStyle(palette.onTealForeground)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: MenuBarPopoverLayout.primaryStartButtonMinHeight)
             .background(
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(theme.borderDefault.opacity(0.9), lineWidth: 1)
-                    .background(RoundedRectangle(cornerRadius: 2).fill(Color.clear))
+                RoundedRectangle(cornerRadius: MenuBarPopoverLayout.primaryButtonCornerRadius)
+                    .fill(palette.teal.opacity(configuration.isPressed ? 0.85 : 1))
             )
-            .opacity(configuration.isPressed ? 0.88 : 1)
-            .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
+    }
+}
+
+struct MenuBarPopoverTealOutlineButtonStyle: ButtonStyle {
+    @Environment(\.menuBarPopoverPalette) private var palette
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(palette.teal)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                    .stroke(palette.cellBorder, lineWidth: 0.5)
+                    .background(
+                        RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                            .fill(Color.clear)
+                    )
+            )
+            .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+}
+
+struct MenuBarPopoverGrayOutlineButtonStyle: ButtonStyle {
+    @Environment(\.menuBarPopoverPalette) private var palette
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(palette.textMuted)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                    .stroke(palette.grayOutline.opacity(0.6), lineWidth: 0.5)
+                    .background(
+                        RoundedRectangle(cornerRadius: MenuBarPopoverLayout.cardCornerRadius)
+                            .fill(Color.clear)
+                    )
+            )
+            .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+}
+
+// MARK: - CTAs
+
+struct MenuBarPopoverActions: View {
+    @ObservedObject var viewModel: AppShellViewModel
+    let purchaseAllowsUse: Bool
+    let onOpenFullWindow: () -> Void
+    let onQuit: () -> Void
+
+    var body: some View {
+        VStack(spacing: DesignSpacing.spacing3) {
+            HStack(spacing: DesignSpacing.spacing3) {
+                Button("Open Focus Hacker") {
+                    onOpenFullWindow()
+                }
+                .buttonStyle(MenuBarPopoverTealOutlineButtonStyle())
+                .disabled(!purchaseAllowsUse)
+                .opacity(purchaseAllowsUse ? 1 : 0.55)
+
+                Button("Quit app") {
+                    onQuit()
+                }
+                .buttonStyle(MenuBarPopoverGrayOutlineButtonStyle())
+            }
+        }
     }
 }

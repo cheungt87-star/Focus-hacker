@@ -7,6 +7,8 @@ import SwiftUI
 private enum MenuBarPillMetrics {
     /// Squared chip corners (not fully round capsule).
     static let cornerRadius: CGFloat = 4
+    /// Standard menu bar status item height.
+    static let statusItemHeight: CGFloat = 22
 }
 
 private struct MenuBarPillRasterContent: View {
@@ -30,6 +32,12 @@ private struct MenuBarPillRasterContent: View {
     }
 }
 
+private extension NSImage {
+    var hasValidMenuBarRasterSize: Bool {
+        size.width > 0.5 && size.height > 0.5
+    }
+}
+
 struct MenuBarStatusLabel: View {
     @ObservedObject var viewModel: AppShellViewModel
 
@@ -48,11 +56,7 @@ struct MenuBarStatusLabel: View {
     var body: some View {
         Group {
             if viewModel.menuBarShowsPill {
-                if let pillRaster {
-                    Image(nsImage: pillRaster)
-                } else {
-                    Text(viewModel.menuBarPillText)
-                }
+                pillContent
             } else {
                 Text(viewModel.menuBarText)
             }
@@ -61,7 +65,11 @@ struct MenuBarStatusLabel: View {
         .onAppear { refreshPillRaster() }
         .onChange(of: viewModel.menuBarText) { _ in refreshPillRaster() }
         .onChange(of: viewModel.menuBarPillText) { _ in refreshPillRaster() }
+        .onChange(of: viewModel.menuBarGetReadySecondsRemaining) { _ in refreshPillRaster() }
         .onChange(of: viewModel.menuBarShowsPill) { _ in refreshPillRaster() }
+        .onChange(of: viewModel.menuBarLabelRevision) { _ in refreshPillRaster() }
+        .onChange(of: viewModel.state.remainingSeconds) { _ in refreshPillRaster() }
+        .onChange(of: viewModel.state.sessionState) { _ in refreshPillRaster() }
         .onChange(of: viewModel.menuBarShouldFlash) { flashing in
             if !flashing {
                 flashDimmed = false
@@ -77,6 +85,21 @@ struct MenuBarStatusLabel: View {
         }
     }
 
+    @ViewBuilder
+    private var pillContent: some View {
+        if let pillRaster, pillRaster.hasValidMenuBarRasterSize {
+            Image(nsImage: pillRaster)
+                .resizable()
+                .scaledToFit()
+                .frame(height: MenuBarPillMetrics.statusItemHeight)
+                .fixedSize()
+        } else {
+            Text(viewModel.menuBarPillText)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .monospacedDigit()
+        }
+    }
+
     @MainActor
     private func refreshPillRaster() {
         guard viewModel.menuBarShowsPill else {
@@ -84,8 +107,9 @@ struct MenuBarStatusLabel: View {
             return
         }
 
+        let pillText = viewModel.menuBarPillText
         let content = MenuBarPillRasterContent(
-            text: viewModel.menuBarPillText,
+            text: pillText,
             background: viewModel.menuBarPillBackground,
             opacity: pillOpacity
         )

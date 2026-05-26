@@ -74,8 +74,7 @@ struct BlockedItemsDetailView: View {
     private var websitesTabContent: some View {
         VStack(alignment: .leading, spacing: DesignSpacing.spacing4) {
             Text(
-                "Add domains such as twitter.com or patterns like *.reddit.com. Blocking runs only during focus. " +
-                    "Changes take effect beginning with the next focus interval."
+                "Add domains such as twitter.com or patterns like *.reddit.com. Blocking runs only during focus."
             )
             .macDSHelperText()
             .fixedSize(horizontal: false, vertical: true)
@@ -86,7 +85,7 @@ struct BlockedItemsDetailView: View {
                 Button("Add domain") {
                     blockerSettings.addBlockedDomainFromDraft()
                 }
-                .buttonStyle(MacDSSecondaryButtonStyle())
+                .buttonStyle(MacDSPrimaryButtonStyle())
             }
 
             if let domainError = blockerSettings.blockedDomainDraftError {
@@ -133,8 +132,12 @@ struct BlockedItemsDetailView: View {
     }
 
     private var blockedDomainsListView: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(blockerSettings.blockedDomains.enumerated()), id: \.offset) { index, domain in
+                if index > 0 {
+                    Divider()
+                        .overlay(MacDS.Color.dividerLight)
+                }
                 BlockedDomainListRow(domain: domain) {
                     blockerSettings.removeBlockedDomains(at: IndexSet(integer: index))
                 }
@@ -143,8 +146,12 @@ struct BlockedItemsDetailView: View {
     }
 
     private var blockedBundlesListView: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(blockerSettings.blockedBundleIdentifiers.enumerated()), id: \.offset) { index, bundleIdentifier in
+                if index > 0 {
+                    Divider()
+                        .overlay(MacDS.Color.dividerLight)
+                }
                 BlockedAppListRow(bundleIdentifier: bundleIdentifier) {
                     blockerSettings.removeBlockedBundles(at: IndexSet(integer: index))
                 }

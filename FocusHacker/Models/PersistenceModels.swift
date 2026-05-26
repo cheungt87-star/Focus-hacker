@@ -15,6 +15,8 @@ final class Session {
     var totalFocusMinutes: Int?
     /// Correlates begin → complete / early end for one timer run (nil on legacy rows).
     var sessionUUID: UUID?
+    /// True when session ended via full completion path (1.5× XP). Nil on legacy rows.
+    var naturallyConcluded: Bool?
 
     @Relationship(deleteRule: .nullify, inverse: \XPRecord.session)
     var xpRecords: [XPRecord] = []
@@ -29,7 +31,8 @@ final class Session {
         configuredRounds: Int? = nil,
         didComplete: Bool? = nil,
         totalFocusMinutes: Int? = nil,
-        sessionUUID: UUID? = nil
+        sessionUUID: UUID? = nil,
+        naturallyConcluded: Bool? = nil
     ) {
         self.createdAt = createdAt
         self.focusDurationMinutes = focusDurationMinutes
@@ -41,6 +44,7 @@ final class Session {
         self.didComplete = didComplete
         self.totalFocusMinutes = totalFocusMinutes
         self.sessionUUID = sessionUUID
+        self.naturallyConcluded = naturallyConcluded
     }
 }
 
@@ -50,17 +54,20 @@ final class XPRecord {
     var xpAmount: Int
     var createdAt: Date
     var focusMinutesContributing: Int?
+    var naturallyConcluded: Bool?
     var session: Session?
 
     init(
         xpAmount: Int,
         createdAt: Date,
         focusMinutesContributing: Int? = nil,
+        naturallyConcluded: Bool? = nil,
         session: Session? = nil
     ) {
         self.xpAmount = xpAmount
         self.createdAt = createdAt
         self.focusMinutesContributing = focusMinutesContributing
+        self.naturallyConcluded = naturallyConcluded
         self.session = session
     }
 }
@@ -79,18 +86,44 @@ final class StreakRecord {
     }
 }
 
-/// Single-row player progression (weekly goal level). Created on first access if missing.
+/// Single-row gamification progression (weekly targets, streaks, evaluation cursor).
 @available(macOS 14.0, *)
 @Model
 final class PlayerProgress {
-    var currentLevel: Int
-    /// Monday 00:00 (local) of the most recently **evaluated** closed week (goal hit/miss applied).
+    /// Monday 00:00 (local) of the most recently **evaluated** closed week.
     var lastEvaluatedWeekStart: Date?
+    /// Monday of the first week with any recorded focus activity.
+    var firstActivityWeekStart: Date?
+    var defaultTargetStreak: Int?
+    var personalTargetStreak: Int?
+    var longestDefaultTargetStreak: Int?
+    var longestPersonalTargetStreak: Int?
+    /// Personal weekly minutes target at last closed-week evaluation (detect target-change reset).
+    var personalTargetMinutesAtLastEvaluation: Int?
+
+    /// Legacy weekly XP level (v2); unused after gamification spec migration.
+    var currentLevel: Int
     var lastWeekXPEarned: Int?
 
-    init(currentLevel: Int = 1, lastEvaluatedWeekStart: Date? = nil, lastWeekXPEarned: Int? = nil) {
-        self.currentLevel = currentLevel
+    init(
+        lastEvaluatedWeekStart: Date? = nil,
+        firstActivityWeekStart: Date? = nil,
+        defaultTargetStreak: Int? = 0,
+        personalTargetStreak: Int? = 0,
+        longestDefaultTargetStreak: Int? = 0,
+        longestPersonalTargetStreak: Int? = 0,
+        personalTargetMinutesAtLastEvaluation: Int? = nil,
+        currentLevel: Int = 1,
+        lastWeekXPEarned: Int? = nil
+    ) {
         self.lastEvaluatedWeekStart = lastEvaluatedWeekStart
+        self.firstActivityWeekStart = firstActivityWeekStart
+        self.defaultTargetStreak = defaultTargetStreak
+        self.personalTargetStreak = personalTargetStreak
+        self.longestDefaultTargetStreak = longestDefaultTargetStreak
+        self.longestPersonalTargetStreak = longestPersonalTargetStreak
+        self.personalTargetMinutesAtLastEvaluation = personalTargetMinutesAtLastEvaluation
+        self.currentLevel = currentLevel
         self.lastWeekXPEarned = lastWeekXPEarned
     }
 }

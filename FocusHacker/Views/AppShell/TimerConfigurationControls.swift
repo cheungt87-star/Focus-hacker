@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct TimerSessionConfigurationProfileKey: EnvironmentKey {
+    static let defaultValue: TimerSessionConfigurationProfile = .mainWindow
+}
+
+extension EnvironmentValues {
+    var timerSessionConfigurationProfile: TimerSessionConfigurationProfile {
+        get { self[TimerSessionConfigurationProfileKey.self] }
+        set { self[TimerSessionConfigurationProfileKey.self] = newValue }
+    }
+}
+
 private enum TimerConfigureRowMetrics {
     static let titleColumnWidth: CGFloat = 108
     static let groupedFieldWidth: CGFloat = 60
@@ -26,9 +37,10 @@ private struct TimerChromeChevronTapTarget: View {
     let action: () -> Void
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.colorScheme) private var colorScheme
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome, colorScheme: colorScheme)
     }
 
     var body: some View {
@@ -60,9 +72,11 @@ struct TimerConfigurationFieldRow<Content: View>: View {
     @ViewBuilder private var content: () -> Content
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.menuBarPopoverPalette) private var popoverPalette
+    @Environment(\.colorScheme) private var colorScheme
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome, colorScheme: colorScheme)
     }
 
     init(
@@ -77,16 +91,29 @@ struct TimerConfigurationFieldRow<Content: View>: View {
         self.content = content
     }
 
+    @Environment(\.timerSessionConfigurationProfile) private var configurationProfile
+
     private var titleFont: Font {
         switch emphasis {
         case .primary:
             return appUISurface == .mainWindow ? .macDSLabel.weight(.semibold) : .fhCaption.weight(.semibold)
         case .secondary:
+            if configurationProfile == .menuBarPopoverCustom {
+                return .macDSHelper
+            }
             return appUISurface == .mainWindow ? .macDSCaption : .fhCaption.weight(.medium)
         }
     }
 
     private var titleColor: Color {
+        if configurationProfile == .menuBarPopoverCustom {
+            switch emphasis {
+            case .primary:
+                return popoverPalette.textPrimary
+            case .secondary:
+                return popoverPalette.textMuted
+            }
+        }
         switch emphasis {
         case .primary:
             return palette.textPrimary
@@ -135,10 +162,18 @@ private struct TimerChromeGroupedIntField: View {
     var canDecrementOverride: Bool? = nil
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.timerSessionConfigurationProfile) private var configurationProfile
+    @Environment(\.colorScheme) private var colorScheme
     @FocusState private var isFocused: Bool
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome, colorScheme: colorScheme)
+    }
+
+    private var focusRingColor: Color {
+        configurationProfile == .menuBarPopoverCustom
+            ? MacDS.Resolved.accentTeal(for: colorScheme)
+            : palette.inputFocusRingColor
     }
 
     private var defaultCanIncrement: Bool { value < range.upperBound }
@@ -222,7 +257,8 @@ private struct TimerChromeGroupedIntField: View {
         .overlay {
             if isFocused {
                 RoundedRectangle(cornerRadius: MacDS.Radius.standard)
-                    .stroke(palette.inputFocusRingColor, lineWidth: 2)
+                    .stroke(focusRingColor, lineWidth: 2)
+                    .shadow(color: focusRingColor.opacity(0.35), radius: 3, x: 0, y: 0)
                     .allowsHitTesting(false)
             }
         }
@@ -232,9 +268,10 @@ private struct TimerChromeGroupedIntField: View {
 private struct TimerDurationColonSeparator: View {
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.colorScheme) private var colorScheme
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome, colorScheme: colorScheme)
     }
 
     var body: some View {
@@ -252,21 +289,32 @@ struct TimerDurationMinuteSecondFields: View {
     var minuteRange: ClosedRange<Int> = 0...120
     var secondRange: ClosedRange<Int> = 0...59
     var isEnabled: Bool = true
+    /// When set, decrement is blocked once total duration would fall below this value.
+    var minimumTotalSeconds: Int? = nil
     /// When disabled, show an em dash placeholder instead of numeric fields.
     var showsBlankWhenDisabled: Bool = false
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.colorScheme) private var colorScheme
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome, colorScheme: colorScheme)
     }
 
     private var secondsCanIncrement: Bool {
         seconds < secondRange.upperBound || minutes < minuteRange.upperBound
     }
 
+    private var totalDurationSeconds: Int {
+        TimerConfiguration.composeDuration(minutes: minutes, seconds: seconds)
+    }
+
     private var secondsCanDecrement: Bool {
-        if minutes == 0, seconds <= 1 {
+        if let minimumTotalSeconds,
+           totalDurationSeconds <= minimumTotalSeconds {
+            return false
+        }
+        if minutes == minuteRange.lowerBound, seconds <= secondRange.lowerBound {
             return false
         }
         return seconds > secondRange.lowerBound || minutes > minuteRange.lowerBound
@@ -276,7 +324,14 @@ struct TimerDurationMinuteSecondFields: View {
         guard minutes > minuteRange.lowerBound else {
             return false
         }
-        return minutes > 1 || seconds > 0
+        if let minimumTotalSeconds {
+            let nextTotal = TimerConfiguration.composeDuration(
+                minutes: minutes - 1,
+                seconds: seconds
+            )
+            return nextTotal >= minimumTotalSeconds
+        }
+        return minutes > minuteRange.lowerBound + 1 || seconds > 0
     }
 
     private var durationAccessibilityValue: String {
@@ -387,36 +442,118 @@ struct TimerPositiveIntegerField: View {
     }
 }
 
+/// Validation ranges and accent styling for timer configuration forms.
+enum TimerSessionConfigurationProfile: Equatable, Sendable {
+    case mainWindow
+    case menuBarPopoverCustom
+
+    var usesTealAccents: Bool {
+        switch self {
+        case .mainWindow, .menuBarPopoverCustom:
+            return true
+        }
+    }
+
+    var focusMinuteRange: ClosedRange<Int> {
+        switch self {
+        case .mainWindow:
+            return 0...120
+        case .menuBarPopoverCustom:
+            return 1...60
+        }
+    }
+
+    var shortBreakMinuteRange: ClosedRange<Int> {
+        switch self {
+        case .mainWindow:
+            return 0...30
+        case .menuBarPopoverCustom:
+            return 1...30
+        }
+    }
+
+    var focusSetsRange: ClosedRange<Int> {
+        switch self {
+        case .mainWindow:
+            return 1...99
+        case .menuBarPopoverCustom:
+            return 1...10
+        }
+    }
+
+    var totalSessionsRange: ClosedRange<Int> {
+        switch self {
+        case .mainWindow:
+            return 1...10
+        case .menuBarPopoverCustom:
+            return 1...20
+        }
+    }
+
+    var sessionBreakMinuteRange: ClosedRange<Int> {
+        switch self {
+        case .mainWindow:
+            return 0...60
+        case .menuBarPopoverCustom:
+            return 1...60
+        }
+    }
+}
+
 /// Shared work/rest/rounds/cycles/long break fields for the main timer and menu bar popover.
 struct TimerSessionConfigurationForm: View {
     @ObservedObject var viewModel: AppShellViewModel
     var isEnabled: Bool
     var sectionTitle: String
+    var profile: TimerSessionConfigurationProfile = .mainWindow
     @Environment(\.timerChromeTheme) private var chrome
     @Environment(\.appUISurface) private var appUISurface
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.menuBarPopoverPalette) private var popoverPalette
 
     private var palette: FormChromePalette {
-        FormChromePalette.resolve(surface: appUISurface, timerChrome: chrome)
+        FormChromePalette.resolve(surface: resolvedSurface, timerChrome: chrome, colorScheme: colorScheme)
+    }
+
+    private var resolvedSurface: AppUISurface {
+        profile == .menuBarPopoverCustom ? .menuBarPopover : appUISurface
     }
 
     private var phaseAccentFocus: Color {
-        appUISurface == .mainWindow ? MacDS.Color.accentTeal : .fhColorEmber
+        profile.usesTealAccents ? MacDS.Color.accentTeal : .fhColorEmber
     }
 
     private var phaseAccentRest: Color {
-        appUISurface == .mainWindow ? MacDS.Color.accentTealLight : .fhColorMint
+        profile.usesTealAccents ? MacDS.Color.accentTealLight : .fhColorMint
     }
 
     private var phaseAccentSets: Color {
-        appUISurface == .mainWindow ? MacDS.Color.accentTeal : .fhColorPowerBlue
+        profile.usesTealAccents ? MacDS.Color.accentTeal : .fhColorPowerBlue
     }
 
     private var phaseAccentSessions: Color {
-        appUISurface == .mainWindow ? MacDS.Color.accentOrange : .fhColorGold
+        profile.usesTealAccents ? MacDS.Color.accentTeal : .fhColorGold
     }
 
     private var phaseAccentLongRest: Color {
-        appUISurface == .mainWindow ? MacDS.Color.accentOrange : .fhColorSunny
+        profile.usesTealAccents ? MacDS.Color.accentTeal : .fhColorSunny
+    }
+
+    private var sectionHeaderFont: Font {
+        switch profile {
+        case .mainWindow:
+            return .macDSCardTitle
+        case .menuBarPopoverCustom:
+            return .macDSLabel.weight(.semibold)
+        }
+    }
+
+    private var fieldLabelEmphasis: TimerConfigureFieldEmphasis {
+        profile == .menuBarPopoverCustom ? .secondary : .primary
+    }
+
+    private var sectionHeaderColor: Color {
+        profile == .menuBarPopoverCustom ? popoverPalette.textPrimary : palette.textPrimary
     }
 
     var body: some View {
@@ -425,13 +562,15 @@ struct TimerSessionConfigurationForm: View {
             repeatScheduleSection
         }
         .frame(maxWidth: .infinity)
+        .environment(\.timerSessionConfigurationProfile, profile)
+        .environment(\.appUISurface, resolvedSurface)
     }
 
     private var configureSessionSection: some View {
         VStack(alignment: .center, spacing: 0) {
             Text(sectionTitle)
-                .font(appUISurface == .mainWindow ? .macDSCardTitle : .fhBody.weight(.semibold))
-                .foregroundStyle(palette.textPrimary)
+                .font(sectionHeaderFont)
+                .foregroundStyle(sectionHeaderColor)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, DesignSpacing.spacing2)
@@ -443,9 +582,10 @@ struct TimerSessionConfigurationForm: View {
                 TimerDurationMinuteSecondFields(
                     minutes: $viewModel.focusDurationMinutes,
                     seconds: $viewModel.focusDurationSecondsComponent,
-                    minuteRange: 0...120,
+                    minuteRange: profile.focusMinuteRange,
                     secondRange: 0...59,
-                    isEnabled: isEnabled
+                    isEnabled: isEnabled,
+                    minimumTotalSeconds: profile == .menuBarPopoverCustom ? 60 : nil
                 )
             }
 
@@ -458,9 +598,10 @@ struct TimerSessionConfigurationForm: View {
                 TimerDurationMinuteSecondFields(
                     minutes: $viewModel.shortRestDurationMinutes,
                     seconds: $viewModel.shortRestDurationSecondsComponent,
-                    minuteRange: 0...30,
+                    minuteRange: profile.shortBreakMinuteRange,
                     secondRange: 0...59,
-                    isEnabled: isEnabled
+                    isEnabled: isEnabled,
+                    minimumTotalSeconds: profile == .menuBarPopoverCustom ? 60 : nil
                 )
             }
 
@@ -473,7 +614,7 @@ struct TimerSessionConfigurationForm: View {
                 TimerPositiveIntegerField(
                     accessibilityLabel: "Focus Sets",
                     value: $viewModel.roundsPerSession,
-                    range: 1...99,
+                    range: profile.focusSetsRange,
                     isEnabled: isEnabled
                 )
             }
@@ -482,9 +623,9 @@ struct TimerSessionConfigurationForm: View {
 
     private var repeatScheduleSection: some View {
         VStack(alignment: .center, spacing: 0) {
-            Text("Repeat schedule")
-                .font(appUISurface == .mainWindow ? .macDSCardTitle : .fhBody.weight(.semibold))
-                .foregroundStyle(palette.textPrimary)
+            Text("Repeat Schedule")
+                .font(sectionHeaderFont)
+                .foregroundStyle(sectionHeaderColor)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
                 .padding(.top, DesignSpacing.spacing2)
@@ -503,7 +644,7 @@ struct TimerSessionConfigurationForm: View {
                 TimerPositiveIntegerField(
                     accessibilityLabel: "Total Sessions",
                     value: $viewModel.cyclesPerSession,
-                    range: 1...10,
+                    range: profile.totalSessionsRange,
                     isEnabled: isEnabled
                 )
             }
@@ -518,9 +659,10 @@ struct TimerSessionConfigurationForm: View {
                     TimerDurationMinuteSecondFields(
                         minutes: $viewModel.longRestDurationMinutes,
                         seconds: $viewModel.longRestDurationSecondsComponent,
-                        minuteRange: 0...60,
+                        minuteRange: profile.sessionBreakMinuteRange,
                         secondRange: 0...59,
                         isEnabled: isEnabled,
+                        minimumTotalSeconds: profile == .menuBarPopoverCustom ? 60 : nil,
                         showsBlankWhenDisabled: false
                     )
                 }
@@ -543,7 +685,12 @@ struct TimerSessionConfigurationForm: View {
         phaseAccent: Color?,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
-        TimerConfigurationFieldRow(title: title, phaseAccent: phaseAccent, content: content)
-            .padding(.vertical, DesignSpacing.spacing1)
+        TimerConfigurationFieldRow(
+            title: title,
+            phaseAccent: phaseAccent,
+            emphasis: fieldLabelEmphasis,
+            content: content
+        )
+        .padding(.vertical, DesignSpacing.spacing1)
     }
 }

@@ -67,7 +67,7 @@
 
 - [x] **Feature 4: Notifications & Audio**
   - [x] 5-second countdown splash screen before each interval transition
-  - [x] Audio prompt at each transition (e.g. "Get back to work", "Time to rest")
+  - [x] Audio prompt at each transition (e.g. "Time to work, Let's Focus!", "It's time to have a short break!. Take a rest!")
   - [x] Multiple free sound packs selectable in settings (all included with app, no paywalled packs)
 
 - [ ] **Feature 5: Onboarding & Settings**

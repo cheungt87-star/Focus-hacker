@@ -4,8 +4,10 @@ import Foundation
 enum ProfileChartPeriod: String, CaseIterable, Identifiable, Sendable {
     case week
     case month
-    case sixMonths
     case year
+
+    /// Periods exposed in the profile chart header toggle (W, M, Y).
+    static let chartToggleCases: [ProfileChartPeriod] = [.week, .month, .year]
 
     var id: String { rawValue }
 
@@ -13,17 +15,15 @@ enum ProfileChartPeriod: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .week: return "Week"
         case .month: return "Month"
-        case .sixMonths: return "6 mo"
         case .year: return "Year"
         }
     }
 
-    /// Compact label for the profile chart period toggle (W, M, 6M, Y).
+    /// Compact label for the profile chart period toggle (W, M, Y).
     var shortTitle: String {
         switch self {
         case .week: return "W"
         case .month: return "M"
-        case .sixMonths: return "6M"
         case .year: return "Y"
         }
     }
@@ -33,36 +33,15 @@ enum ProfileChartPeriod: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .week: return "Week"
         case .month: return "Month"
-        case .sixMonths: return "6 months"
         case .year: return "Year"
-        }
-    }
-
-    var rollingDayCount: Int {
-        switch self {
-        case .week: return 7
-        case .month: return 30
-        case .sixMonths: return 180
-        case .year: return 365
         }
     }
 
     var statsDashboardWindow: StatsDashboardWindow {
         switch self {
-        case .week: return .rolling7
-        case .month: return .rolling30
-        case .sixMonths: return .rolling180
-        case .year: return .rolling365
-        }
-    }
-
-    /// Days between x-axis labels for readable charts at longer ranges.
-    var xAxisLabelStrideDays: Int {
-        switch self {
-        case .week: return 1
-        case .month: return 5
-        case .sixMonths: return 14
-        case .year: return 30
+        case .week: return .week
+        case .month: return .month
+        case .year: return .year
         }
     }
 }
@@ -103,34 +82,82 @@ enum ProfileDashboardMetrics {
     }
 }
 
-/// Placeholder hero metrics until weekly streaks and badge XP thresholds are wired.
-enum ProfileHeroPlaceholder {
-    static let nextLevelTitle = "Hall of Famer"
-    static let nextLevelXPThreshold = 84_000
-    static let mockLifetimeXP = 36_000
-    static let mockProgressFraction = 0.57
-    static let mockXPGap = nextLevelXPThreshold - mockLifetimeXP
-    static let mockCurrentStreakWeeks = 12
-    static let mockLongestStreakWeeks = 24
-
-    static var mockProgressPercentDisplay: Int {
-        Int((mockProgressFraction * 100).rounded())
-    }
+struct ProfileWeeklyGoalSnapshot: Sendable {
+    let fraction: Double
+    let percentDisplay: Int
+    let currentMinutes: Int
+    let targetMinutes: Int
 }
 
-/// Mock and conversion helpers for chart target reference lines (backend wiring later).
 enum ProfileChartTargets {
-    static let mockWeeklyPersonalMinutes = 600
-
     static func dailyMinutes(fromWeekly weeklyMinutes: Int) -> Int {
         max(1, Int((Double(weeklyMinutes) / 7.0).rounded()))
     }
+}
 
-    static var mockFocusHackerDailyMinutes: Int {
-        dailyMinutes(fromWeekly: ProfileDashboardMetrics.defaultWeeklyMinutesTarget)
+enum ProfileHeroMetrics {
+    static let totalUnlockSegments = 10
+
+    /// Segments filled on the achievement rail (Newcomer at 0 XP → 1; all tiers earned → 10).
+    static func unlockedLevelCount(totalXP: Int) -> Int {
+        let tierCount = FocusBadgeProgression.tiers.filter { totalXP >= $0.xpThreshold }.count
+        return tierCount >= FocusBadgeProgression.tiers.count ? totalUnlockSegments : tierCount + 1
     }
 
-    static var mockPersonalDailyMinutes: Int {
-        dailyMinutes(fromWeekly: mockWeeklyPersonalMinutes)
+    /// XP threshold shown for the next badge goal (max tier shows current badge threshold).
+    static func nextBadgeXPDisplay(totalXP: Int) -> Int {
+        FocusBadgeProgression.nextBadge(forTotalXP: totalXP)?.xpThreshold
+            ?? FocusBadgeProgression.badge(forTotalXP: totalXP).xpThreshold
+    }
+
+    static func progressPercentDisplay(fraction: Double) -> String {
+        "\(Int((min(1, max(0, fraction)) * 100).rounded()))%"
+    }
+
+    static func isMaxBadge(totalXP: Int) -> Bool {
+        FocusBadgeProgression.nextBadge(forTotalXP: totalXP) == nil
+    }
+
+    static func xpProgressLabel(totalXP: Int) -> String {
+        if isMaxBadge(totalXP: totalXP) {
+            return "Max level reached"
+        }
+        let nextTitle = FocusBadgeProgression.nextBadge(forTotalXP: totalXP)?.title ?? ""
+        return "Progress to \(nextTitle)"
+    }
+
+    /// Cumulative lifetime XP / next threshold with tier-relative percent in parentheses.
+    static func xpProgressAmountText(totalXP: Int, tierRelativeFraction: Double) -> String {
+        if isMaxBadge(totalXP: totalXP) {
+            return formattedXP(totalXP)
+        }
+        let target = nextBadgeXPDisplay(totalXP: totalXP)
+        let percent = progressPercentDisplay(fraction: tierRelativeFraction)
+        return "\(formattedXP(totalXP)) / \(formattedXP(target)) (\(percent))"
+    }
+
+    static func xpProgressPercentText(fraction: Double) -> String {
+        progressPercentDisplay(fraction: fraction)
+    }
+
+    /// Bar fill clamped to 2% minimum (spec) so zero progress is still visible.
+    static func xpProgressBarFraction(fraction: Double) -> Double {
+        let clamped = min(1, max(0, fraction))
+        if clamped <= 0 { return 0.02 }
+        return max(0.02, clamped)
+    }
+
+    static func levelPositionLabel(badgeLevel: Int, unlockedCount: Int) -> String {
+        let displayLevel = badgeLevel + 1
+        let position = min(unlockedCount, totalUnlockSegments)
+        return "Level \(displayLevel) · \(position) / \(totalUnlockSegments)"
+    }
+
+    static func formattedXP(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.groupingSeparator = ","
+        formatter.usesGroupingSeparator = value >= 1_000
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 }

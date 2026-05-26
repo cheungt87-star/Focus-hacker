@@ -4,6 +4,9 @@ struct PaywallView: View {
     @ObservedObject var purchaseEntitlements: PurchaseEntitlementService
 
     @State private var purchaseErrorAlert: String?
+    private var appearancePreference: AppearancePreference {
+        AppDependencies.live.settingsStore.appearancePreference
+    }
 
     var body: some View {
         ScrollView {
@@ -56,6 +59,7 @@ struct PaywallView: View {
         .frame(width: 480)
         .background(MacDS.Color.backgroundPrimary)
         .environment(\.appUISurface, .mainWindow)
+        .preferredColorScheme(appearancePreference.preferredColorScheme)
         .alert("Purchases", isPresented: Binding(
             get: { purchaseErrorAlert != nil },
             set: { presented in if !presented { purchaseErrorAlert = nil } }

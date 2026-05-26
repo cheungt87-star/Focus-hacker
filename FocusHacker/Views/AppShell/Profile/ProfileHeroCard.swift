@@ -2,157 +2,221 @@ import SwiftUI
 
 @available(macOS 14.0, *)
 struct ProfileHeroCard: View {
+    @Environment(\.colorScheme) private var colorScheme
     @ObservedObject var viewModel: AppShellViewModel
 
-    var body: some View {
-        MacDSHeroCard {
-            ViewThatFits(in: .horizontal) {
-                wideLayout
-                narrowLayout
-            }
+    private static let layoutBreakpoint: CGFloat = 600
+    private static let sidebarWidth: CGFloat = 210
+    private static let badgeDiameterDesktop: CGFloat = 88
+    private static let badgeDiameterMobile: CGFloat = 72
+
+    private var palette: ProfileHeroPalette {
+        ProfileHeroPalette.resolve(for: colorScheme)
+    }
+
+    private var appearance: FocusBadgeAppearance {
+        FocusBadgeAppearance.forLevel(viewModel.playerLevel)
+    }
+
+    private var nextBadgeAppearance: FocusBadgeAppearance {
+        if let next = FocusBadgeProgression.nextBadge(forTotalXP: viewModel.totalLifetimeXP) {
+            return FocusBadgeAppearance.forBadge(next)
         }
+        return appearance
+    }
+
+    private var unlockedLevelCount: Int {
+        ProfileHeroMetrics.unlockedLevelCount(totalXP: viewModel.totalLifetimeXP)
+    }
+
+    private var isMaxLevel: Bool {
+        ProfileHeroMetrics.isMaxBadge(totalXP: viewModel.totalLifetimeXP)
+    }
+
+    private var progressBarFraction: Double {
+        if isMaxLevel {
+            return 1
+        }
+        return ProfileHeroMetrics.xpProgressBarFraction(fraction: viewModel.badgeProgressFraction)
+    }
+
+    private var xpProgressLabel: String {
+        ProfileHeroMetrics.xpProgressLabel(totalXP: viewModel.totalLifetimeXP)
+    }
+
+    private var xpProgressAmount: String {
+        ProfileHeroMetrics.xpProgressAmountText(
+            totalXP: viewModel.totalLifetimeXP,
+            tierRelativeFraction: viewModel.badgeProgressFraction
+        )
+    }
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            cardLayout(compact: false)
+            cardLayout(compact: true)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: MacDS.Radius.card))
+        .overlay(
+            RoundedRectangle(cornerRadius: MacDS.Radius.card)
+                .stroke(palette.cardBorder, lineWidth: ProfileHeroPalette.cardBorderWidth)
+        )
+        .profileHeroCardElevation(palette: palette)
+        .environment(\.profileHeroPalette, palette)
+        .preferredColorScheme(.dark)
         .redacted(reason: viewModel.profileIsLoading ? .placeholder : [])
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(heroAccessibilityLabel)
     }
 
-    private var heroAccessibilityLabel: String {
-        "Welcome back, \(viewModel.profileDisplayName). Lifetime XP \(viewModel.totalLifetimeXP). Longest streak \(ProfileHeroPlaceholder.mockLongestStreakWeeks) weeks. Current streak \(ProfileHeroPlaceholder.mockCurrentStreakWeeks) weeks. Progress to \(ProfileHeroPlaceholder.nextLevelTitle) \(ProfileHeroPlaceholder.mockProgressPercentDisplay) percent. Level \(viewModel.playerLevelTitle)."
-    }
-
-    private var wideLayout: some View {
-        HStack(alignment: .center, spacing: DesignSpacing.spacing8) {
-            leftContent
-                .frame(maxWidth: .infinity, alignment: .leading)
-            badgeColumn
-                .frame(width: 200)
-        }
-    }
-
-    private var narrowLayout: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing6) {
-            leftContent
-            badgeColumn
-                .frame(maxWidth: .infinity)
-        }
-    }
-
-    private var leftContent: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing6) {
-            VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
-                Text("Welcome back")
-                    .font(.macDSLabel)
-                    .foregroundStyle(.white.opacity(0.7))
-                Text(viewModel.profileDisplayName)
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundStyle(.white)
-                Text(viewModel.profileHandleDisplay)
-                    .font(.macDSBody)
-                    .foregroundStyle(.white.opacity(0.75))
+    private func cardLayout(compact: Bool) -> some View {
+        Group {
+            if compact {
+                VStack(spacing: 0) {
+                    leftPanel
+                    badgePanel(compact: true)
+                }
+            } else {
+                HStack(alignment: .top, spacing: 0) {
+                    leftPanel
+                    badgePanel(compact: false)
+                        .frame(width: Self.sidebarWidth)
+                }
+                .frame(minWidth: Self.layoutBreakpoint)
             }
-
-            HStack(alignment: .top, spacing: DesignSpacing.spacing6) {
-                xpStatColumn
-                longestStreakStatColumn
-                currentStreakStatColumn
-            }
-
-            levelProgressSection
         }
     }
 
-    private var xpStatColumn: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
-            Label("Lifetime XP", systemImage: "chart.line.uptrend.xyaxis")
-                .font(.macDSLabel)
-                .foregroundStyle(.white.opacity(0.7))
-                .labelStyle(.titleAndIcon)
-            Text("\(viewModel.totalLifetimeXP.formatted())")
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundStyle(MacDS.Color.accentTealLighter)
-                .monospacedDigit()
+    private var leftPanel: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            headerSection
+            statsRow
+            progressSection
+            Spacer(minLength: 0)
         }
-        .accessibilityElement(children: .combine)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(16)
+        .background(palette.leftPanel)
     }
 
-    private var longestStreakStatColumn: some View {
-        weekStreakStatColumn(
-            title: "Longest streak",
-            systemImage: "flame.fill",
-            weeks: ProfileHeroPlaceholder.mockLongestStreakWeeks
-        )
-    }
-
-    private var currentStreakStatColumn: some View {
-        weekStreakStatColumn(
-            title: "Current streak",
-            systemImage: "bolt.fill",
-            weeks: ProfileHeroPlaceholder.mockCurrentStreakWeeks
-        )
-    }
-
-    private func weekStreakStatColumn(title: String, systemImage: String, weeks: Int) -> some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
-            Label(title, systemImage: systemImage)
-                .font(.macDSLabel)
-                .foregroundStyle(.white.opacity(0.7))
-                .labelStyle(.titleAndIcon)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(weeks)")
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
-                    .foregroundStyle(MacDS.Color.accentOrange)
-                    .monospacedDigit()
-                Text("w")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(MacDS.Color.accentOrange.opacity(0.9))
-            }
-            Text("weeks in a row")
-                .font(.macDSCaption)
-                .foregroundStyle(.white.opacity(0.6))
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var levelProgressSection: some View {
-        VStack(alignment: .leading, spacing: DesignSpacing.spacing2) {
-            HStack {
-                Text("Progress to \(ProfileHeroPlaceholder.nextLevelTitle)")
-                    .font(.macDSLabel)
-                    .foregroundStyle(.white.opacity(0.8))
-                Spacer()
-                Text("\(ProfileHeroPlaceholder.mockXPGap.formatted()) XP to go")
-                    .font(.macDSCaption.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .monospacedDigit()
-            }
-            MacDSProgressBar(
-                fraction: ProfileHeroPlaceholder.mockProgressFraction,
-                tint: MacDS.Color.accentTealLighter
+    private func badgePanel(compact: Bool) -> some View {
+        VStack(spacing: 12) {
+            ProfileHero3DBadge(
+                appearance: appearance,
+                outerDiameter: compact ? Self.badgeDiameterMobile : Self.badgeDiameterDesktop
             )
-            Text("\(ProfileHeroPlaceholder.mockProgressPercentDisplay)% complete")
-                .font(.macDSCaption)
-                .foregroundStyle(.white.opacity(0.6))
-        }
-    }
-
-    private var badgeColumn: some View {
-        VStack(spacing: DesignSpacing.spacing3) {
-            ZStack {
-                Circle()
-                    .fill(MacDS.Color.accentTeal.opacity(0.35))
-                    .frame(width: 140, height: 140)
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 52))
-                    .foregroundStyle(MacDS.Color.accentOrange)
-            }
             Text(viewModel.playerLevelTitle)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(.white)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(palette.primaryText)
                 .multilineTextAlignment(.center)
-            Text("Achievement level")
-                .font(.macDSCaption.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.8))
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Text(
+                ProfileHeroMetrics.levelPositionLabel(
+                    badgeLevel: viewModel.playerLevel,
+                    unlockedCount: unlockedLevelCount
+                )
+            )
+            .font(.system(size: 11))
+            .foregroundStyle(palette.mutedLabel)
+            .multilineTextAlignment(.center)
+            ProfileHeroPipRow(
+                unlockedCount: unlockedLevelCount,
+                totalSegments: ProfileHeroMetrics.totalUnlockSegments,
+                accent: appearance.accentColor,
+                unfilledColor: appearance.primaryText.opacity(0.25)
+            )
+            if !isMaxLevel {
+                ProfileHeroNextLevelPill(
+                    nextTitle: viewModel.nextBadgeTitle,
+                    appearance: nextBadgeAppearance
+                )
+            }
         }
         .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 24)
+        .background {
+            ZStack {
+                palette.rightPanel
+                appearance.badgePanelGradient()
+            }
+        }
+        .overlay(alignment: .leading) {
+            if !compact {
+                Rectangle()
+                    .fill(appearance.borderColor.opacity(FocusBadgeAppearance.badgePanelDividerOpacity))
+                    .frame(width: 1)
+            }
+        }
+    }
+
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(viewModel.profileDisplayName)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(palette.primaryText)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Text(viewModel.profileHandleDisplay)
+                .font(.system(size: 13))
+                .foregroundStyle(palette.mutedLabel)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+    }
+
+    private var statsRow: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ProfileHeroStatBox(
+                title: "Lifetime XP",
+                systemImage: "chart.line.uptrend.xyaxis",
+                value: ProfileHeroMetrics.formattedXP(viewModel.totalLifetimeXP)
+            )
+            ProfileHeroStatBox(
+                title: "Best streak",
+                systemImage: "flame.fill",
+                value: "\(viewModel.longestDefaultWeeklyStreak) wks"
+            )
+            ProfileHeroStatBox(
+                title: "Lifetime sessions",
+                systemImage: "list.bullet.rectangle",
+                value: ProfileHeroMetrics.formattedXP(viewModel.lifetimeEndedSessionCount)
+            )
+        }
+    }
+
+    private var progressSection: some View {
+        ProfileHeroProgressBlock(
+            label: xpProgressLabel,
+            amountText: xpProgressAmount,
+            fraction: progressBarFraction,
+            accent: appearance.accentColor
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(xpProgressLabel), \(xpProgressAmount)")
+    }
+
+    private var heroAccessibilityLabel: String {
+        var parts = [
+            viewModel.profileDisplayName,
+            viewModel.profileHandleDisplay,
+            viewModel.playerLevelTitle,
+            "Lifetime XP \(ProfileHeroMetrics.formattedXP(viewModel.totalLifetimeXP))",
+            "Best streak \(viewModel.longestDefaultWeeklyStreak) weeks",
+            "Lifetime sessions \(viewModel.lifetimeEndedSessionCount)",
+            "\(xpProgressLabel), \(xpProgressAmount)",
+            ProfileHeroMetrics.levelPositionLabel(
+                badgeLevel: viewModel.playerLevel,
+                unlockedCount: unlockedLevelCount
+            ),
+        ]
+        if !isMaxLevel {
+            parts.append("Next level \(viewModel.nextBadgeTitle)")
+        }
+        if let subtitle = appearance.subtitle {
+            parts.append(subtitle)
+        }
+        return parts.joined(separator: ". ")
     }
 }

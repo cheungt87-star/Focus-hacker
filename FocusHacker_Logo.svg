@@ -1,0 +1,40 @@
+<svg width="256" height="256" viewBox="0 0 256 256" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>FocusHacker app icon</title>
+  <desc>A bold target with a lightning bolt through the center, combining focus intensity with hacker energy in ember red and gold</desc>
+  <defs>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .bg-light { fill: #1a1a1a; }
+      }
+      @media (prefers-color-scheme: light) {
+        .bg-light { fill: #ffffff; }
+      }
+    </style>
+  </defs>
+
+  <!-- Soft background for context -->
+  <rect width="256" height="256" class="bg-light"/>
+
+  <!-- Outer ring (soft) -->
+  <circle cx="128" cy="128" r="110" fill="none" stroke="#FF4757" stroke-width="8" opacity="0.3"/>
+
+  <!-- Middle ring (medium) -->
+  <circle cx="128" cy="128" r="75" fill="none" stroke="#FF4757" stroke-width="7" opacity="0.6"/>
+
+  <!-- Inner ring (dark/solid) -->
+  <circle cx="128" cy="128" r="40" fill="none" stroke="#FF4757" stroke-width="7"/>
+
+  <!-- Center bullseye -->
+  <circle cx="128" cy="128" r="14" fill="#FF4757"/>
+
+  <!-- Lightning bolt through center (ember red with gold highlight) -->
+  <g transform="translate(128, 128)">
+    <!-- Main lightning bolt shape -->
+    <path d="M 0,-50 L 12,-15 L -8,-15 L 18,40 L -5,5 L 8,5 Z" fill="#FFD700" opacity="0.9"/>
+    <path d="M 0,-50 L 12,-15 L -8,-15 L 18,40 L -5,5 L 8,5 Z" fill="none" stroke="#FF4757" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Subtle accent circles for depth -->
+  <circle cx="128" cy="128" r="115" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.4"/>
+  <circle cx="128" cy="128" r="34" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.5"/>
+</svg>

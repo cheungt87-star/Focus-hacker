@@ -7,7 +7,7 @@ final class AppShellStateTests: XCTestCase {
         XCTAssertEqual(symbolNames.count, AppShellSessionState.allCases.count)
     }
 
-    func testSettingsStorePersistsSelectedSectionAndDockPreference() {
+    func testSettingsStorePersistsSelectedSectionAndAppearancePreference() {
         let suiteName = "tests.appShellSettings.\(UUID().uuidString)"
         guard let userDefaults = UserDefaults(suiteName: suiteName) else {
             XCTFail("Expected dedicated UserDefaults suite.")
@@ -18,19 +18,21 @@ final class AppShellStateTests: XCTestCase {
         let store = UserDefaultsSettingsStore(userDefaults: userDefaults, appGroupSuiteName: nil)
 
         XCTAssertEqual(store.selectedAppShellSection, "history")
-        XCTAssertTrue(store.showsDockIcon, "Registered default is true so app menus / Help work.")
 
         store.selectedAppShellSection = "settings"
-        store.showsDockIcon = false
         XCTAssertEqual(store.selectedAppShellSection, "settings")
-        XCTAssertFalse(store.showsDockIcon)
 
         store.selectedAppShellSection = "blockedItems"
         XCTAssertEqual(store.selectedAppShellSection, "blockedItems")
         XCTAssertEqual(AppShellSection(rawValue: store.selectedAppShellSection), .blockedItems)
 
-        store.showsDockIcon = true
-        XCTAssertTrue(store.showsDockIcon)
+        store.selectedAppShellSection = "analytics"
+        XCTAssertEqual(store.selectedAppShellSection, "analytics")
+        XCTAssertEqual(AppShellSection(rawValue: store.selectedAppShellSection), .analytics)
+
+        XCTAssertEqual(store.appearancePreference, .system)
+        store.appearancePreference = .dark
+        XCTAssertEqual(store.appearancePreference, .dark)
 
         userDefaults.removePersistentDomain(forName: suiteName)
     }
@@ -46,13 +48,19 @@ final class AppShellStateTests: XCTestCase {
         let store = UserDefaultsSettingsStore(userDefaults: userDefaults, appGroupSuiteName: nil)
 
         XCTAssertEqual(store.selectedSoundPackIdentifier, "voice-prompts")
+        XCTAssertEqual(store.selectedVoiceOption, VoiceOption.defaultSelection.rawValue)
         XCTAssertFalse(store.isAudioMuted)
 
         store.selectedSoundPackIdentifier = "chimes"
+        store.selectedVoiceOption = VoiceOption.david.rawValue
         store.isAudioMuted = true
 
         XCTAssertEqual(store.selectedSoundPackIdentifier, "chimes")
+        XCTAssertEqual(store.selectedVoiceOption, VoiceOption.david.rawValue)
         XCTAssertTrue(store.isAudioMuted)
+
+        store.selectedVoiceOption = VoiceOption.defaultSelection.rawValue
+        XCTAssertEqual(store.selectedVoiceOption, VoiceOption.defaultSelection.rawValue)
 
         userDefaults.removePersistentDomain(forName: suiteName)
     }
@@ -166,6 +174,7 @@ final class AppShellStateMenuBarTests: XCTestCase {
         XCTAssertEqual(state.menuBarPresentation, .focus)
         XCTAssertEqual(state.menuBarText, "FOCUS: 25:00")
         XCTAssertEqual(state.menuBarPillText, "FOCUS: 25:00 · 1 of 4")
+        XCTAssertEqual(state.menuBarCompactPillText, "FOCUS 25:00")
         XCTAssertEqual(
             state.menuBarAccessibilityLabel,
             "Focus, 25:00 remaining, round 1 of 4"
@@ -186,6 +195,7 @@ final class AppShellStateMenuBarTests: XCTestCase {
         )
         XCTAssertEqual(state.menuBarText, "FOCUS: 05:00")
         XCTAssertEqual(state.menuBarPillText, "FOCUS: 05:00 · 4 of 4")
+        XCTAssertEqual(state.menuBarCompactPillText, "FOCUS 05:00")
     }
 
     func testFocusSingleRoundOmitsRoundSuffixOnPill() {
@@ -201,6 +211,7 @@ final class AppShellStateMenuBarTests: XCTestCase {
         )
         XCTAssertEqual(state.menuBarText, "FOCUS: 25:00")
         XCTAssertEqual(state.menuBarPillText, "FOCUS: 25:00")
+        XCTAssertEqual(state.menuBarCompactPillText, "FOCUS 25:00")
         XCTAssertEqual(state.menuBarAccessibilityLabel, "Focus, 25:00 remaining")
     }
 
@@ -217,6 +228,7 @@ final class AppShellStateMenuBarTests: XCTestCase {
         )
         XCTAssertEqual(state.menuBarText, "REST: 00:05")
         XCTAssertEqual(state.menuBarPillText, state.menuBarText)
+        XCTAssertEqual(state.menuBarCompactPillText, "REST 00:05")
     }
 
     func testPausedPillTextMatchesMenuBarText() {
@@ -233,6 +245,7 @@ final class AppShellStateMenuBarTests: XCTestCase {
         )
         XCTAssertEqual(state.menuBarText, "PAUSED: 12:34")
         XCTAssertEqual(state.menuBarPillText, state.menuBarText)
+        XCTAssertEqual(state.menuBarCompactPillText, "PAUSED 12:34")
     }
 
     func testRestAtTwentySecondsFlashes() {
@@ -266,6 +279,71 @@ final class AppShellStateMenuBarTests: XCTestCase {
         XCTAssertEqual(state.menuBarPresentation, .paused)
         XCTAssertEqual(state.menuBarText, "PAUSED: 12:34")
         XCTAssertFalse(state.menuBarShouldFlash)
+    }
+
+    func testIdleCompactPillMatchesAppName() {
+        let state = AppShellState.testShell(
+            sessionState: .idle,
+            intervalPhase: nil,
+            currentRound: nil,
+            totalRounds: nil,
+            currentCycle: nil,
+            totalCycles: nil
+        )
+        XCTAssertEqual(state.menuBarCompactPillText, "FocusHacker")
+    }
+}
+
+@MainActor
+final class AppShellViewModelMenuBarSessionTests: XCTestCase {
+    private func makeViewModel() -> (AppShellViewModel, TimerService) {
+        let suiteName = "AppShellViewModelMenuBar.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            fatalError("suite")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = UserDefaultsSettingsStore(userDefaults: defaults, appGroupSuiteName: nil)
+        let blocker = SessionConfigTestBlockerService()
+        let timerService = TimerService(
+            blockerService: blocker,
+            sessionRecorder: NoOpSessionRecorder(),
+            tickIntervalNanoseconds: 100_000_000
+        )
+        let dependencies = AppDependencies(
+            timerService: timerService,
+            blockerService: blocker,
+            automationCoordinator: .shared,
+            xpStatsReader: NoOpXPStatsReader(),
+            gamificationDashboardReader: NoOpGamificationDashboardReader(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
+            settingsStore: store,
+            audioCueService: AudioCueService(voiceOption: .crystal),
+            transitionNotificationService: TransitionNotificationService(),
+            notificationAuthorization: SessionConfigTestNotificationAuth(),
+            purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
+            paywallWindowPresenter: PaywallWindowPresenter()
+        )
+        return (AppShellViewModel(dependencies: dependencies), timerService)
+    }
+
+    func testRunningSessionShowsCompactFocusPillInMenuBar() async {
+        let (viewModel, _) = makeViewModel()
+        viewModel.applyFocusPreset(FocusSessionPresets.expert)
+
+        viewModel.startSession()
+        for _ in 0..<100 {
+            if viewModel.state.sessionState == .focus {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+
+        XCTAssertEqual(viewModel.state.sessionState, .focus)
+        XCTAssertTrue(viewModel.menuBarShowsPill)
+        XCTAssertTrue(viewModel.menuBarPillText.hasPrefix("FOCUS "))
+        XCTAssertFalse(viewModel.menuBarPillText.contains("·"))
+        XCTAssertGreaterThan(viewModel.menuBarLabelRevision, 0)
     }
 }
 
@@ -407,9 +485,10 @@ final class AppShellViewModelSessionConfigTests: XCTestCase {
             automationCoordinator: .shared,
             xpStatsReader: NoOpXPStatsReader(),
             gamificationDashboardReader: NoOpGamificationDashboardReader(),
-            weeklyLevelEvaluating: NoOpWeeklyLevelEvaluator(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
             settingsStore: store,
-            audioCueService: AudioCueService(),
+            audioCueService: AudioCueService(voiceOption: .crystal),
             transitionNotificationService: TransitionNotificationService(),
             notificationAuthorization: SessionConfigTestNotificationAuth(),
             purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
@@ -451,5 +530,464 @@ final class AppShellViewModelSessionConfigTests: XCTestCase {
         viewModel.cyclesPerSession = 2
         XCTAssertEqual(viewModel.stagingTimerConfiguration.longRestDurationSeconds, 20 * 60)
         XCTAssertEqual(viewModel.effectiveLongRestDurationSeconds, 20 * 60)
+    }
+}
+
+@MainActor
+final class FocusSessionPresetViewModelTests: XCTestCase {
+    private func makeStore() -> UserDefaultsSettingsStore {
+        let suiteName = "FocusPreset.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            fatalError("Expected dedicated UserDefaults suite.")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        return UserDefaultsSettingsStore(userDefaults: defaults, appGroupSuiteName: nil)
+    }
+
+    private func makeViewModel(store: UserDefaultsSettingsStore) -> AppShellViewModel {
+        let blocker = SessionConfigTestBlockerService()
+        let timerService = TimerService(
+            blockerService: blocker,
+            sessionRecorder: NoOpSessionRecorder()
+        )
+        let dependencies = AppDependencies(
+            timerService: timerService,
+            blockerService: blocker,
+            automationCoordinator: .shared,
+            xpStatsReader: NoOpXPStatsReader(),
+            gamificationDashboardReader: NoOpGamificationDashboardReader(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
+            settingsStore: store,
+            audioCueService: AudioCueService(voiceOption: .crystal),
+            transitionNotificationService: TransitionNotificationService(),
+            notificationAuthorization: SessionConfigTestNotificationAuth(),
+            purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
+            paywallWindowPresenter: PaywallWindowPresenter()
+        )
+        return AppShellViewModel(dependencies: dependencies)
+    }
+
+    func testApplyFocusPresetUpdatesFieldsAndPersists() {
+        let store = makeStore()
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.applyFocusPreset(FocusSessionPresets.intense)
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "intense")
+        XCTAssertEqual(store.lastSelectedFocusPresetID, "intense")
+        XCTAssertEqual(viewModel.focusDurationMinutes, 40)
+        XCTAssertEqual(viewModel.focusDurationSecondsComponent, 0)
+        XCTAssertEqual(viewModel.shortRestDurationMinutes, 10)
+        XCTAssertEqual(viewModel.shortRestDurationSecondsComponent, 0)
+        XCTAssertEqual(viewModel.roundsPerSession, 3)
+        XCTAssertEqual(viewModel.cyclesPerSession, 1)
+        XCTAssertEqual(viewModel.stagingTimerConfiguration, FocusSessionPresets.intense.timerConfiguration)
+    }
+
+    func testManualEditClearsSelectedPreset() {
+        let store = makeStore()
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+        viewModel.roundsPerSession = 5
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, FocusSessionPresets.createCustomCarouselID)
+        XCTAssertEqual(store.lastSelectedFocusPresetID, FocusSessionPresets.createCustomCarouselID)
+    }
+
+    func testRestoreFocusPresetSelectionUsesSavedPreset() {
+        let store = makeStore()
+        store.lastSelectedFocusPresetID = "expert"
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.restoreFocusPresetSelectionIfNeeded()
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "expert")
+        XCTAssertEqual(viewModel.roundsPerSession, 3)
+        XCTAssertEqual(viewModel.focusDurationMinutes, 50)
+    }
+
+    func testRestoreFocusPresetSelectionDefaultsToClassic() {
+        let store = makeStore()
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.restoreFocusPresetSelectionIfNeeded()
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "classic")
+        XCTAssertEqual(viewModel.stagingTimerConfiguration, FocusSessionPresets.classic.timerConfiguration)
+    }
+
+    func testClearFocusPresetSelectionRemovesPersistence() {
+        let store = makeStore()
+        store.lastSelectedFocusPresetID = "classic"
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.clearFocusPresetSelection()
+
+        XCTAssertNil(viewModel.selectedFocusPresetID)
+        XCTAssertNil(store.lastSelectedFocusPresetID)
+    }
+
+    func testFocusSessionDisplayNameClassicIncludesRecommended() {
+        let viewModel = makeViewModel(store: makeStore())
+
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+        XCTAssertEqual(viewModel.focusSessionDisplayName, "Classic Recommended")
+
+        viewModel.applyFocusPreset(FocusSessionPresets.intense)
+        XCTAssertEqual(viewModel.focusSessionDisplayName, "Intense")
+
+        viewModel.selectCreateCustomFocusPreset()
+        XCTAssertEqual(viewModel.focusSessionDisplayName, "Create Custom")
+    }
+
+    func testPopoverFocusSessionDescriptionMatchesPreset() {
+        let viewModel = makeViewModel(store: makeStore())
+
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+        XCTAssertEqual(
+            viewModel.popoverFocusSessionDescription,
+            FocusSessionPresets.classic.descriptionLine
+        )
+
+        viewModel.selectCreateCustomFocusPreset()
+        XCTAssertEqual(viewModel.popoverFocusSessionDescription, "Custom durations")
+    }
+
+    func testPopoverTimerCardConfigAndFooterStatsFollowPreset() {
+        let viewModel = makeViewModel(store: makeStore())
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+
+        XCTAssertEqual(viewModel.popoverFocusTimeValue, "25 min")
+        XCTAssertEqual(viewModel.popoverRestTimeValue, "5 min")
+        XCTAssertEqual(viewModel.popoverConfigCyclesValue, "4")
+        XCTAssertEqual(viewModel.popoverSessionsStatValue, "1")
+        XCTAssertEqual(viewModel.menuBarSessionStatLabel, "Total session time")
+        XCTAssertEqual(viewModel.menuBarFocusStatLabel, "Total focus time")
+    }
+
+    func testPopoverConfigCyclesValueUpdatesWhenCustomRoundsChange() {
+        let viewModel = makeViewModel(store: makeStore())
+        viewModel.selectCreateCustomFocusPreset()
+        viewModel.roundsPerSession = 6
+
+        XCTAssertEqual(viewModel.popoverConfigCyclesValue, "6")
+    }
+
+    func testCycleFocusPresetForwardWrapsThroughAllFourCarouselSlots() {
+        let viewModel = makeViewModel(store: makeStore())
+
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+        viewModel.cycleFocusPreset(forward: true)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "intense")
+
+        viewModel.cycleFocusPreset(forward: true)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "expert")
+
+        viewModel.cycleFocusPreset(forward: true)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, FocusSessionPresets.createCustomCarouselID)
+        XCTAssertTrue(viewModel.isCreateCustomFocusPresetSelected)
+
+        viewModel.cycleFocusPreset(forward: true)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "classic")
+    }
+
+    func testCycleFocusPresetBackwardWrapsThroughAllFourCarouselSlots() {
+        let viewModel = makeViewModel(store: makeStore())
+
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+        viewModel.cycleFocusPreset(forward: false)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, FocusSessionPresets.createCustomCarouselID)
+
+        viewModel.cycleFocusPreset(forward: false)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "expert")
+
+        viewModel.cycleFocusPreset(forward: false)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "intense")
+
+        viewModel.cycleFocusPreset(forward: false)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "classic")
+    }
+
+    func testCycleFocusPresetFromCreateCustomSelectsClassicOnForward() {
+        let viewModel = makeViewModel(store: makeStore())
+
+        viewModel.selectCreateCustomFocusPreset()
+        viewModel.cycleFocusPreset(forward: true)
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "classic")
+        XCTAssertEqual(viewModel.stagingTimerConfiguration, FocusSessionPresets.classic.timerConfiguration)
+    }
+
+    func testRestoreFocusPresetSelectionRestoresCreateCustomSlot() {
+        let store = makeStore()
+        store.lastSelectedFocusPresetID = FocusSessionPresets.createCustomCarouselID
+        let viewModel = makeViewModel(store: store)
+
+        viewModel.restoreFocusPresetSelectionIfNeeded()
+
+        XCTAssertEqual(viewModel.selectedFocusPresetID, FocusSessionPresets.createCustomCarouselID)
+        XCTAssertTrue(viewModel.isCreateCustomFocusPresetSelected)
+    }
+
+    func testCycleFocusPresetNoOpWhenSessionActive() async {
+        let store = makeStore()
+        let blocker = SessionConfigTestBlockerService()
+        let timerService = TimerService(
+            blockerService: blocker,
+            sessionRecorder: NoOpSessionRecorder()
+        )
+        let dependencies = AppDependencies(
+            timerService: timerService,
+            blockerService: blocker,
+            automationCoordinator: .shared,
+            xpStatsReader: NoOpXPStatsReader(),
+            gamificationDashboardReader: NoOpGamificationDashboardReader(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
+            settingsStore: store,
+            audioCueService: AudioCueService(voiceOption: .crystal),
+            transitionNotificationService: TransitionNotificationService(),
+            notificationAuthorization: SessionConfigTestNotificationAuth(),
+            purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
+            paywallWindowPresenter: PaywallWindowPresenter()
+        )
+        let viewModel = AppShellViewModel(dependencies: dependencies)
+        viewModel.applyFocusPreset(FocusSessionPresets.classic)
+
+        await timerService.startSession(configuration: viewModel.stagingTimerConfiguration)
+        for _ in 0..<100 {
+            if viewModel.state.sessionState == .focus {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(viewModel.state.sessionState, .focus)
+
+        viewModel.cycleFocusPreset(forward: true)
+        XCTAssertEqual(viewModel.selectedFocusPresetID, "classic")
+    }
+}
+
+@MainActor
+final class PopoverHeroUpNextTests: XCTestCase {
+    private func makeStore(
+        rounds: Int = 4,
+        cycles: Int = 1,
+        longRestSeconds: Int = 15 * 60
+    ) -> UserDefaultsSettingsStore {
+        let suiteName = "PopoverHeroUpNext.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            fatalError("suite")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = UserDefaultsSettingsStore(userDefaults: defaults, appGroupSuiteName: nil)
+        store.roundsPerSession = rounds
+        store.cyclesPerSession = cycles
+        store.longRestDurationSeconds = longRestSeconds
+        return store
+    }
+
+    private func makeViewModel(store: UserDefaultsSettingsStore) -> (AppShellViewModel, TimerService) {
+        let blocker = SessionConfigTestBlockerService()
+        let timerService = TimerService(
+            blockerService: blocker,
+            sessionRecorder: NoOpSessionRecorder()
+        )
+        let dependencies = AppDependencies(
+            timerService: timerService,
+            blockerService: blocker,
+            automationCoordinator: .shared,
+            xpStatsReader: NoOpXPStatsReader(),
+            gamificationDashboardReader: NoOpGamificationDashboardReader(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
+            settingsStore: store,
+            audioCueService: AudioCueService(voiceOption: .crystal),
+            transitionNotificationService: TransitionNotificationService(),
+            notificationAuthorization: SessionConfigTestNotificationAuth(),
+            purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
+            paywallWindowPresenter: PaywallWindowPresenter()
+        )
+        return (AppShellViewModel(dependencies: dependencies), timerService)
+    }
+
+    func testIdleHeroUpNextIsFocus() {
+        let store = makeStore()
+        let (viewModel, _) = makeViewModel(store: store)
+
+        XCTAssertEqual(viewModel.heroUpNextCaption, "Up next")
+        XCTAssertEqual(viewModel.heroUpNextPhaseName, "Focus")
+        XCTAssertEqual(viewModel.heroUpNextLine, "Up next: Focus")
+        XCTAssertEqual(
+            viewModel.popoverTimerAccessibilityLabel,
+            "Up next: Focus. \(viewModel.heroCountdownText) remaining. Ready to start"
+        )
+    }
+
+    func testRunningFocusShowsShortBreakUpNext() async {
+        let store = makeStore()
+        let (viewModel, timerService) = makeViewModel(store: store)
+
+        await timerService.startSession(configuration: viewModel.stagingTimerConfiguration)
+        await waitUntilFocusRunning(viewModel)
+
+        XCTAssertEqual(viewModel.heroUpNextPhaseName, "Short break")
+        XCTAssertTrue(viewModel.popoverTimerAccessibilityLabel.contains("Up next: Short break"))
+    }
+
+    func testLastFocusRoundShowsDoneUpNext() async {
+        let store = makeStore(rounds: 1, cycles: 1, longRestSeconds: 0)
+        let (viewModel, timerService) = makeViewModel(store: store)
+
+        await timerService.startSession(configuration: viewModel.stagingTimerConfiguration)
+        await waitUntilFocusRunning(viewModel)
+
+        XCTAssertEqual(viewModel.heroUpNextPhaseName, "Done")
+    }
+
+    func testFocusMidRoundPreviewResolvesShortBreak() {
+        let cfg = TimerConfiguration(
+            focusDurationSeconds: 1_500,
+            shortRestDurationSeconds: 300,
+            longRestDurationSeconds: 0,
+            roundsPerSession: 4,
+            cyclesPerSession: 1
+        )
+        let state = AppShellState.testShell(
+            sessionState: .focus,
+            intervalPhase: .focus,
+            currentRound: 1,
+            totalRounds: 4,
+            currentCycle: 1,
+            totalCycles: 1
+        )
+        XCTAssertEqual(
+            TimerNextIntervalPreview.resolve(configuration: cfg, state: state).footerPhaseName,
+            "Short break"
+        )
+    }
+
+    private func waitUntilFocusRunning(_ viewModel: AppShellViewModel) async {
+        for _ in 0..<100 {
+            if viewModel.state.sessionState == .focus, viewModel.state.intervalPhase == .focus {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTFail("Expected focus session to start")
+    }
+}
+
+@MainActor
+final class FocusSessionFormatterTests: XCTestCase {
+    private func makeStore(rounds: Int) -> UserDefaultsSettingsStore {
+        let suiteName = "FocusSessionFormatter.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            fatalError("Expected UserDefaults suite")
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = UserDefaultsSettingsStore(userDefaults: defaults, appGroupSuiteName: nil)
+        store.roundsPerSession = rounds
+        store.cyclesPerSession = 1
+        return store
+    }
+
+    private func makeViewModel(store: UserDefaultsSettingsStore) -> (AppShellViewModel, TimerService) {
+        let blocker = SessionConfigTestBlockerService()
+        let timerService = TimerService(
+            blockerService: blocker,
+            sessionRecorder: NoOpSessionRecorder()
+        )
+        let dependencies = AppDependencies(
+            timerService: timerService,
+            blockerService: blocker,
+            automationCoordinator: .shared,
+            xpStatsReader: NoOpXPStatsReader(),
+            gamificationDashboardReader: NoOpGamificationDashboardReader(),
+            analyticsSessionReader: NoOpAnalyticsSessionReader(),
+            weeklyGamificationEvaluating: NoOpWeeklyGamificationEvaluator(),
+            settingsStore: store,
+            audioCueService: AudioCueService(voiceOption: .crystal),
+            transitionNotificationService: TransitionNotificationService(),
+            notificationAuthorization: SessionConfigTestNotificationAuth(),
+            purchaseEntitlementService: PurchaseEntitlementService(settingsStore: store),
+            paywallWindowPresenter: PaywallWindowPresenter()
+        )
+        return (AppShellViewModel(dependencies: dependencies), timerService)
+    }
+
+    private func waitUntilFocusRunning(_ viewModel: AppShellViewModel) async {
+        for _ in 0..<100 {
+            if viewModel.state.sessionState == .focus, viewModel.state.intervalPhase == .focus {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTFail("Expected focus session to reach .focus state")
+    }
+
+    func testIdleFocusSessionFormatters() {
+        let store = makeStore(rounds: 3)
+        let (viewModel, _) = makeViewModel(store: store)
+        viewModel.applyFocusPreset(FocusSessionPresets.expert)
+
+        XCTAssertEqual(viewModel.focusSessionPresetName, "Expert")
+        XCTAssertEqual(viewModel.focusSessionPresetSubtitle, "50 min · 10 min break · 3 cycles")
+        XCTAssertEqual(viewModel.focusSessionUpNextLine, "UP NEXT · FOCUS")
+        XCTAssertEqual(viewModel.focusSessionCyclePillText, "1 / 3")
+        XCTAssertEqual(viewModel.focusSessionTotalStatLabel, "TOTAL")
+        XCTAssertEqual(viewModel.focusSessionFocusStatLabel, "FOCUS")
+        XCTAssertEqual(viewModel.focusSessionSessionsStatLabel, "SESSIONS")
+        XCTAssertEqual(viewModel.focusSessionPrimaryButtonTitle, "Start focus")
+        XCTAssertFalse(viewModel.focusSessionShowsEndSessionButton)
+    }
+
+    func testRunningFocusSessionCyclePillAndFooterLabels() async {
+        let store = makeStore(rounds: 3)
+        let (viewModel, timerService) = makeViewModel(store: store)
+        viewModel.applyFocusPreset(FocusSessionPresets.expert)
+
+        await timerService.startSession(configuration: viewModel.stagingTimerConfiguration)
+        await waitUntilFocusRunning(viewModel)
+
+        XCTAssertEqual(viewModel.focusSessionUpNextLine, "UP NEXT · FOCUS")
+        XCTAssertEqual(viewModel.focusSessionCyclePillText, "1 / 3")
+        XCTAssertEqual(viewModel.focusSessionTotalStatLabel, "SESSION LEFT")
+        XCTAssertEqual(viewModel.focusSessionFocusStatLabel, "FOCUS LEFT")
+        XCTAssertEqual(viewModel.focusSessionSessionsStatLabel, "SESSIONS LEFT")
+        XCTAssertEqual(viewModel.focusSessionPrimaryButtonTitle, "Pause")
+        XCTAssertTrue(viewModel.focusSessionShowsEndSessionButton)
+    }
+
+    func testCustomFocusSessionShowsInlineConfigurationSubtitle() {
+        let store = makeStore(rounds: 3)
+        let (viewModel, _) = makeViewModel(store: store)
+        viewModel.selectCreateCustomFocusPreset()
+
+        XCTAssertTrue(viewModel.focusSessionShowsCustomConfiguration)
+        XCTAssertEqual(viewModel.focusSessionPresetSubtitle, "Custom session")
+    }
+
+    func testPausedFocusSessionPrimaryButtonTitle() async {
+        let store = makeStore(rounds: 3)
+        let (viewModel, timerService) = makeViewModel(store: store)
+        viewModel.applyFocusPreset(FocusSessionPresets.expert)
+
+        await timerService.startSession(configuration: viewModel.stagingTimerConfiguration)
+        await waitUntilFocusRunning(viewModel)
+        viewModel.togglePause()
+
+        for _ in 0..<100 {
+            if viewModel.state.isSessionPaused {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+
+        XCTAssertTrue(viewModel.state.isSessionPaused)
+        XCTAssertEqual(viewModel.focusSessionPrimaryButtonTitle, "Resume")
+        XCTAssertTrue(viewModel.focusSessionPrimaryButtonUsesPlayIcon)
     }
 }

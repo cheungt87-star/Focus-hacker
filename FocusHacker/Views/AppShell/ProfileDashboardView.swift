@@ -19,6 +19,13 @@ struct ProfileDashboardView: View {
         .background(MacDS.Color.backgroundPrimary)
         .environment(\.appUISurface, .mainWindow)
         .onAppear {
+            // #region agent log
+            DebugSessionLog82afba.write(
+                hypothesisId: "H2",
+                location: "ProfileDashboardView.onAppear",
+                message: "profile_on_appear_refresh"
+            )
+            // #endregion
             viewModel.refreshAllProfileData()
         }
     }

@@ -122,8 +122,8 @@ enum TimerTransitionEvent: Sendable, Equatable {
     case focusStarted(round: Int, totalRounds: Int)
     case shortRestStarted(round: Int, totalRounds: Int)
     case longRestStarted
-    case sessionCompleted(xpAwarded: Int)
-    case sessionEndedEarly
+    case sessionCompleted(xpAwarded: Int, focusMinutes: Int, focusSeconds: Int)
+    case sessionEndedEarly(xpAwarded: Int)
 }
 
 protocol TimerServiceProtocol: Sendable {
@@ -182,6 +182,11 @@ extension BlockerServiceProtocol {
 
 protocol NotificationAuthorizationServing: Sendable {
     func requestAuthorization() async -> Bool
+}
+
+protocol GamificationProgressResetting: Sendable {
+    func resetAllProgress(settingsStore: UserDefaultsSettingsStore) throws
+    func resetLifetimeXP(settingsStore: UserDefaultsSettingsStore) throws
 }
 
 protocol NetworkExtensionBridgeProtocol: Sendable {

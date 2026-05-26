@@ -25,7 +25,6 @@ final class BlockerSettingsController: ObservableObject {
 
     private let settingsStore: UserDefaultsSettingsStore
     private let blockerService: BlockerServiceProtocol
-    private let automationCoordinator = AutomationCoordinator.shared
 
     init(settingsStore: UserDefaultsSettingsStore, blockerService: BlockerServiceProtocol) {
         self.settingsStore = settingsStore
@@ -36,14 +35,29 @@ final class BlockerSettingsController: ObservableObject {
     }
 
     func refreshBrowserPermissionStates() {
-        AutomationPermissionPrimer.refreshGrantStateQuietly()
-        safariAutomationState = automationCoordinator.safariPermissionState
-        chromeAutomationState = automationCoordinator.chromePermissionState
+        safariAutomationState = AutomationPermissionPrimer.refreshPermissionState(
+            applicationName: BrowserAutomationTarget.safariApplicationName,
+            context: "settings",
+            policy: .passive
+        )
+        chromeAutomationState = AutomationPermissionPrimer.refreshPermissionState(
+            applicationName: BrowserAutomationTarget.chromeApplicationName,
+            context: "settings",
+            policy: .passive
+        )
     }
 
     func recheckBrowserPermissions() {
-        AutomationPermissionPrimer.forceProbeNow()
-        refreshBrowserPermissionStates()
+        safariAutomationState = AutomationPermissionPrimer.refreshPermissionState(
+            applicationName: BrowserAutomationTarget.safariApplicationName,
+            context: "settings_recheck",
+            policy: .userInitiated
+        )
+        chromeAutomationState = AutomationPermissionPrimer.refreshPermissionState(
+            applicationName: BrowserAutomationTarget.chromeApplicationName,
+            context: "settings_recheck",
+            policy: .userInitiated
+        )
     }
 
     func addBlockedDomainFromDraft() {

@@ -20,7 +20,7 @@ enum PurchaseAccessEvaluation: Equatable, Sendable {
         case trialActive(expiresAt: Date)
     }
 
-    /// Human-readable subtitle for Settings → About (non-localized identifiers stay in code until Localizable.strings exist).
+    /// Human-readable subtitle for Settings → Your account (non-localized identifiers stay in code until Localizable.strings exist).
     func aboutSubtitle(now: Date) -> String? {
         switch self {
         case .fullAccess(.lifetimePurchase):

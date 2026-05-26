@@ -24,6 +24,7 @@ enum BrowserAppleScriptRunner {
     }
 
     /// Window-count probe — always `tell application` (launches browser if needed) so TCC registers the target.
+    /// User-initiated permission flows only; passive checks use `runListTabs` when the browser is already running.
     static func runAutomationRegistrationProbe(applicationName: String) -> Result<String, Error> {
         let scriptSource = applicationName == "Google Chrome"
             ? chromeRegistrationProbeScript()

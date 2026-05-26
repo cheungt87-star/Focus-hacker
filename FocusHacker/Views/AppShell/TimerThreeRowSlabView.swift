@@ -76,7 +76,7 @@ enum TimerThreeRowSlabLayout {
     }
 
     fileprivate var slabStatValueFontSize: CGFloat {
-        row1FontSize + 4
+        TimerMetricsDisplayTypography.slabValueSize(for: self)
     }
 }
 
@@ -88,8 +88,10 @@ struct TimerThreeRowSlabView: View {
     var onPresentPaywall: () -> Void
     var onRequestEndSession: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     private var appearance: TimerSlabAppearance {
-        TimerSlabAppearance.make(layout: layout, viewModel: viewModel)
+        TimerSlabAppearance.make(layout: layout, viewModel: viewModel, colorScheme: colorScheme)
     }
 
     private static let slabRowHeightRatioSum = 0.16 + 0.56 + 0.18
@@ -124,20 +126,60 @@ struct TimerThreeRowSlabView: View {
         .accessibilityLabel(viewModel.timerSlabAccessibilitySummary)
     }
 
+    private func slabRow1IdleStatColumn(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.system(size: layout.slabStatCaptionFontSize, weight: .medium))
+                .foregroundStyle(appearance.headerSecondaryForeground)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(value)
+                .font(
+                    .system(
+                        size: layout.slabStatValueFontSize,
+                        weight: TimerMetricsDisplayTypography.valueWeight
+                    )
+                    .monospacedDigit()
+                )
+                .foregroundStyle(appearance.headerPrimaryForeground)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+    }
+
     @ViewBuilder
     private func row1(height: CGFloat) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(viewModel.menuBarSessionStatLabel)
-                    .font(.system(size: layout.slabStatCaptionFontSize, weight: .medium))
-                    .foregroundStyle(appearance.headerSecondaryForeground)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Text(viewModel.menuBarSessionStatValue)
-                    .font(.system(size: layout.slabStatValueFontSize, weight: .bold).monospacedDigit())
-                    .foregroundStyle(appearance.headerPrimaryForeground)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                if viewModel.state.sessionState == .idle {
+                    HStack(alignment: .top, spacing: DesignSpacing.spacing2) {
+                        slabRow1IdleStatColumn(
+                            label: viewModel.menuBarSessionStatLabel,
+                            value: viewModel.menuBarSessionStatValue
+                        )
+                        slabRow1IdleStatColumn(
+                            label: viewModel.menuBarFocusStatLabel,
+                            value: viewModel.menuBarFocusStatValue
+                        )
+                    }
+                } else {
+                    Text(viewModel.menuBarSessionStatLabel)
+                        .font(.system(size: layout.slabStatCaptionFontSize, weight: .medium))
+                        .foregroundStyle(appearance.headerSecondaryForeground)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(viewModel.menuBarSessionStatValue)
+                        .font(
+                            .system(
+                                size: layout.slabStatValueFontSize,
+                                weight: TimerMetricsDisplayTypography.valueWeight
+                            )
+                            .monospacedDigit()
+                        )
+                        .foregroundStyle(appearance.headerPrimaryForeground)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, DesignSpacing.spacing2)
@@ -169,30 +211,21 @@ struct TimerThreeRowSlabView: View {
                         }
                         onStartSession()
                     }
-                    .modifier(SlabStartButtonStyle(
-                        appearance: appearance,
-                        fontSize: layout.controlFontSize
-                    ))
+                    .modifier(SlabStartButtonStyle(fontSize: layout.controlFontSize))
                     .opacity(purchaseAllowsUse ? 1 : 0.55)
                 } else {
                     HStack(spacing: 6) {
                         Button(viewModel.pauseButtonTitle) {
                             viewModel.togglePause()
                         }
-                        .modifier(SlabPauseButtonStyle(
-                            appearance: appearance,
-                            fontSize: layout.controlFontSize
-                        ))
+                        .modifier(SlabPauseButtonStyle(fontSize: layout.controlFontSize))
                         .disabled(!viewModel.canPause || !purchaseAllowsUse)
                         .opacity((viewModel.canPause && purchaseAllowsUse) ? 1 : 0.45)
 
                         Button("End") {
                             onRequestEndSession()
                         }
-                        .modifier(SlabEndButtonStyle(
-                            appearance: appearance,
-                            fontSize: layout.controlFontSize
-                        ))
+                        .modifier(SlabEndButtonStyle(fontSize: layout.controlFontSize))
                         .disabled(viewModel.state.sessionState == .idle || !purchaseAllowsUse)
                         .opacity(purchaseAllowsUse ? 1 : 0.45)
                     }
@@ -219,7 +252,7 @@ struct TimerThreeRowSlabView: View {
                 .minimumScaleFactor(0.7)
             Text(viewModel.heroCountdownText)
                 .id(viewModel.heroTimerDisplayIdentity)
-                .font(layout == .mainWindow ? .macDSTimerDigits(size: heroFontSize) : .fhTimer(size: heroFontSize))
+                .font(.macDSTimerDigits(size: heroFontSize))
                 .foregroundStyle(appearance.heroForeground)
                 .minimumScaleFactor(0.35)
                 .lineLimit(1)
@@ -236,7 +269,13 @@ struct TimerThreeRowSlabView: View {
                     .font(.system(size: layout.slabStatCaptionFontSize, weight: .medium))
                     .foregroundStyle(appearance.footerLabelTint)
                 Text(viewModel.timerSlabCyclesLeftValue)
-                    .font(.system(size: layout.slabStatValueFontSize, weight: .bold).monospacedDigit())
+                    .font(
+                        .system(
+                            size: layout.slabStatValueFontSize,
+                            weight: TimerMetricsDisplayTypography.valueWeight
+                        )
+                        .monospacedDigit()
+                    )
                     .foregroundStyle(appearance.footerPrimaryForeground)
             }
             .frame(maxWidth: .infinity, alignment: .center)
@@ -267,7 +306,13 @@ struct TimerThreeRowSlabView: View {
                     .font(.system(size: layout.slabStatCaptionFontSize, weight: .medium))
                     .foregroundStyle(appearance.footerLabelTint)
                 Text(viewModel.timerSlabRoundsLeftValue)
-                    .font(.system(size: layout.slabStatValueFontSize, weight: .bold).monospacedDigit())
+                    .font(
+                        .system(
+                            size: layout.slabStatValueFontSize,
+                            weight: TimerMetricsDisplayTypography.valueWeight
+                        )
+                        .monospacedDigit()
+                    )
                     .foregroundStyle(appearance.footerPrimaryForeground)
             }
             .frame(maxWidth: .infinity, alignment: .center)
@@ -334,87 +379,22 @@ private struct OptionalUppercase: ViewModifier {
 }
 
 private struct SlabStartButtonStyle: ViewModifier {
-    let appearance: TimerSlabAppearance
     let fontSize: CGFloat
     func body(content: Content) -> some View {
-        if appearance.usesBrutalistControls {
-            content.buttonStyle(SlabCompactPrimaryButtonStyle(fill: .fhBrutalistLime, fontSize: fontSize))
-        } else {
-            content.buttonStyle(MacDSSlabCompactPrimaryButtonStyle(fontSize: fontSize))
-        }
+        content.buttonStyle(MacDSSlabCompactPrimaryButtonStyle(fontSize: fontSize))
     }
 }
 
 private struct SlabPauseButtonStyle: ViewModifier {
-    let appearance: TimerSlabAppearance
     let fontSize: CGFloat
     func body(content: Content) -> some View {
-        if appearance.usesBrutalistControls {
-            content.buttonStyle(SlabCompactPrimaryButtonStyle(fill: .fhColorGold, fontSize: fontSize))
-        } else {
-            content.buttonStyle(MacDSSlabCompactPrimaryButtonStyle(fontSize: fontSize))
-        }
+        content.buttonStyle(MacDSSlabCompactSecondaryButtonStyle(fontSize: fontSize))
     }
 }
 
 private struct SlabEndButtonStyle: ViewModifier {
-    let appearance: TimerSlabAppearance
     let fontSize: CGFloat
     func body(content: Content) -> some View {
-        if appearance.usesBrutalistControls {
-            content.buttonStyle(SlabGoldCompactOutlineButtonStyle(fontSize: fontSize))
-        } else {
-            content.buttonStyle(MacDSSlabCompactSecondaryButtonStyle(fontSize: fontSize))
-        }
-    }
-}
-
-// MARK: - Legacy popover-only button styles
-
-private struct SlabCompactPrimaryButtonStyle: ButtonStyle {
-    var fill: Color
-    var fontSize: CGFloat
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: fontSize, weight: .heavy))
-            .textCase(.uppercase)
-            .tracking(0.35)
-            .foregroundStyle(Color.black)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.65)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 6)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(fill.opacity(configuration.isPressed ? 0.88 : 1))
-            )
-            .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
-    }
-}
-
-private struct SlabGoldCompactOutlineButtonStyle: ButtonStyle {
-    var fontSize: CGFloat
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: fontSize, weight: .heavy))
-            .textCase(.uppercase)
-            .tracking(0.35)
-            .foregroundStyle(Color.fhColorGold)
-            .multilineTextAlignment(.center)
-            .lineLimit(2)
-            .minimumScaleFactor(0.65)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 6)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(Color.fhColorGold.opacity(0.95), lineWidth: 1)
-            )
-            .opacity(configuration.isPressed ? 0.88 : 1)
-            .animation(FocusHackerMotion.easeFast, value: configuration.isPressed)
+        content.buttonStyle(MacDSSlabCompactSecondaryButtonStyle(fontSize: fontSize))
     }
 }

@@ -38,8 +38,9 @@ final class PaywallWindowPresenter: NSObject, NSWindowDelegate {
         let rootView = PaywallView(purchaseEntitlements: purchaseEntitlements)
 
         let hosting = NSHostingController(rootView: rootView)
-        let newWindow = NSWindow(contentViewController: hosting)
+        let newWindow = AppWindowChrome.makeWindow(contentViewController: hosting)
         newWindow.title = "Activate FocusHacker"
+        AppWindowChrome.applyNoFullScreenPolicy(to: newWindow)
         newWindow.styleMask = [.titled]
         newWindow.standardWindowButton(.closeButton)?.isHidden = true
         newWindow.standardWindowButton(.miniaturizeButton)?.isHidden = true

@@ -35,6 +35,7 @@ struct MainWindowView: View {
         }
         .environment(\.appUISurface, .mainWindow)
         .animation(FocusHackerMotion.easeFast, value: viewModel.showsEndSessionConfirmation)
+        .preferredColorScheme(viewModel.appearancePreference.preferredColorScheme)
     }
 
     private var sidebar: some View {
@@ -46,7 +47,7 @@ struct MainWindowView: View {
                 .padding(.top, DesignSpacing.spacing6)
 
             VStack(alignment: .leading, spacing: DesignSpacing.spacing1) {
-                ForEach(AppShellSection.allCases) { section in
+                ForEach(AppShellSection.sidebarCases) { section in
                     MacDSSidebarNavItem(
                         title: section.title,
                         systemImage: section.systemImage,
@@ -59,6 +60,10 @@ struct MainWindowView: View {
             .padding(.horizontal, DesignSpacing.spacing2)
 
             Spacer(minLength: 0)
+
+            SidebarColorThemeToggle(selection: $viewModel.appearancePreference)
+                .padding(.horizontal, DesignSpacing.spacing3)
+                .padding(.bottom, DesignSpacing.spacing6)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -70,6 +75,8 @@ struct MainWindowView: View {
             TimerSectionView(viewModel: viewModel, purchaseEntitlements: purchaseEntitlements)
         case .blockedItems:
             BlockedItemsDetailView(viewModel: viewModel)
+        case .analytics:
+            AnalyticsDetailView(viewModel: viewModel)
         case .history:
             ProfileDashboardView(viewModel: viewModel)
         case .settings:
@@ -103,9 +110,13 @@ private struct TimerDashboardView: View {
             VStack(alignment: .leading, spacing: DesignSpacing.spacing6) {
                 MacDSSectionHeader(title: "Timer", showsUnderline: false)
 
-                TimerThreeRowSlabView(
+                HStack {
+                    Spacer(minLength: 0)
+                    FocusSessionScreenView(
                     viewModel: viewModel,
                     layout: .mainWindow,
+                    configurationEnabled: timerConfigurationEnabled
+                        && purchaseEntitlements.evaluation.allowsAppUse,
                     purchaseAllowsUse: purchaseEntitlements.evaluation.allowsAppUse,
                     onStartSession: { viewModel.startSession() },
                     onPresentPaywall: {
@@ -116,23 +127,32 @@ private struct TimerDashboardView: View {
                             deps.paywallWindowPresenter.presentIfLocked(purchaseEntitlements: deps.purchaseEntitlementService)
                         }
                     },
-                    onRequestEndSession: { viewModel.requestEndSession() }
-                )
+                    onTogglePause: { viewModel.togglePause() },
+                    onRequestEndSession: { viewModel.requestEndSession() },
+                    onCancelGetReady: { viewModel.cancelMenuBarGetReadyCountdown() }
+                    )
+                    Spacer(minLength: 0)
+                }
 
                 sessionActionsBlock
 
                 if let banner = viewModel.levelUpBannerText {
-                    completionBanner(banner)
+                    FocusBadgeLevelUpBanner(
+                        text: banner,
+                        appearance: FocusBadgeAppearance.forLevel(viewModel.playerLevel)
+                    )
                 }
 
                 if let banner = viewModel.completionBannerText {
                     completionBanner(banner)
                 }
 
-                Divider()
-                    .overlay(MacDS.Color.dividerLight)
+                if !viewModel.isCreateCustomFocusPresetSelected {
+                    Divider()
+                        .overlay(MacDS.Color.dividerLight)
 
-                configurationBlock
+                    configurationBlock
+                }
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .macDSPagePadding()

@@ -32,6 +32,7 @@ enum AppShellSection: String, CaseIterable, Identifiable, Sendable {
     case history
     case timer
     case blockedItems
+    case analytics
     case settings
 
     var id: String { rawValue }
@@ -42,6 +43,8 @@ enum AppShellSection: String, CaseIterable, Identifiable, Sendable {
             return "Timer"
         case .blockedItems:
             return "Blocked Items"
+        case .analytics:
+            return "Analytics"
         case .history:
             return "My profile"
         case .settings:
@@ -55,11 +58,18 @@ enum AppShellSection: String, CaseIterable, Identifiable, Sendable {
             return "timer"
         case .blockedItems:
             return "hand.raised"
+        case .analytics:
+            return "chart.bar"
         case .history:
             return "person.crop.circle"
         case .settings:
             return "gearshape"
         }
+    }
+
+    /// Sections shown in the main window sidebar (Timer is menu-bar / programmatic only).
+    static var sidebarCases: [AppShellSection] {
+        allCases.filter { $0 != .timer }
     }
 }
 
@@ -200,6 +210,20 @@ struct AppShellState: Sendable {
             return menuBarText
         }
         return "\(menuBarText) · \(suffix)"
+    }
+
+    /// Shorter status-item copy (no round suffix; space-separated phase label).
+    var menuBarCompactPillText: String {
+        switch menuBarPresentation {
+        case .neutral:
+            return menuBarText
+        case .focus:
+            return "FOCUS \(countdownText)"
+        case .rest:
+            return "REST \(countdownText)"
+        case .paused:
+            return "PAUSED \(countdownText)"
+        }
     }
 
     var menuBarShouldFlash: Bool {
